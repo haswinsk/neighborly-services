@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { mockServices } from "@/data/mockData";
 import { SERVICE_CATEGORIES } from "@/types";
-import { Search, Wrench } from "lucide-react";
+import { Search, Wrench, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/StarRating";
