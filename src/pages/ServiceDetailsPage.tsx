@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wrench, MapPin, ArrowLeft, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getServiceImage } from "@/data/serviceImages";
 
 const ServiceDetailsPage = () => {
   const { id } = useParams();
