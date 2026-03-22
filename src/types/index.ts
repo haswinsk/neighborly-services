@@ -18,6 +18,7 @@ export interface Service {
   price: number;
   providerId: string;
   providerName: string;
+  providerLocation: string;
   category: string;
   rating: number;
   reviewCount: number;
