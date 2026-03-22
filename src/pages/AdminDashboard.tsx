@@ -21,7 +21,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Users" value={mockUsers.length} icon={Users} />
         <StatCard title="Services" value={mockServices.length} icon={Wrench} />
         <StatCard title="Bookings" value={mockBookings.length} icon={Calendar} />
-        <StatCard title="Revenue" value={`$${totalRevenue}`} icon={DollarSign} />
+        <StatCard title="Revenue" value={`₹${totalRevenue}`} icon={DollarSign} />
       </div>
 
       <div className="mt-8">
