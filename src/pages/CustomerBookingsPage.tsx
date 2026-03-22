@@ -19,7 +19,7 @@ const CustomerBookingsPage = () => {
               <p className="text-sm text-muted-foreground">{b.bookingDate}</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-foreground">${b.price}</span>
+              <span className="text-lg font-bold text-foreground">₹{b.price}</span>
               <StatusBadge status={b.status} />
             </div>
           </div>

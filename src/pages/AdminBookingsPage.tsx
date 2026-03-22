@@ -26,7 +26,7 @@ const AdminBookingsPage = () => (
               <td className="py-4 text-muted-foreground">{b.customerName}</td>
               <td className="py-4 text-muted-foreground">{b.providerName}</td>
               <td className="py-4 text-muted-foreground">{b.bookingDate}</td>
-              <td className="py-4 font-semibold text-foreground">${b.price}</td>
+              <td className="py-4 font-semibold text-foreground">₹{b.price}</td>
               <td className="py-4"><StatusBadge status={b.status} /></td>
             </tr>
           ))}

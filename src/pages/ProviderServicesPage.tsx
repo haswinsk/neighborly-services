@@ -76,7 +76,7 @@ const ProviderServicesPage = () => {
               <p className="text-sm text-muted-foreground line-clamp-1">{s.description}</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-foreground">${s.price}</span>
+              <span className="text-lg font-bold text-foreground">₹{s.price}</span>
               <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>

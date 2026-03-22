@@ -62,14 +62,14 @@ const ServiceListingPage = () => {
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((service) => (
             <Link key={service.id} to={`/services/${service.id}`} className="service-card overflow-hidden">
-              <div className="h-28 bg-gradient-to-br from-primary/5 to-primary/10" />
+              <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-28 w-full object-cover" />
               <div className="p-5">
                 <span className="text-xs font-medium text-primary">{service.category}</span>
                 <h3 className="mt-1 font-semibold text-foreground">{service.serviceName}</h3>
                 <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{service.description}</p>
                 <div className="mt-4 flex items-center justify-between">
                   <StarRating rating={service.rating} size={14} />
-                  <span className="text-lg font-bold text-foreground">${service.price}</span>
+                  <span className="text-lg font-bold text-foreground">₹{service.price}</span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">by {service.providerName} · {service.reviewCount} reviews</p>
               </div>

@@ -98,7 +98,7 @@ const ServiceDetailsPage = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8 rounded-lg border bg-card p-6 shadow-sm">
               <div className="text-center">
-                <span className="text-3xl font-bold text-foreground">${service.price}</span>
+                <span className="text-3xl font-bold text-foreground">₹{service.price}</span>
                 <span className="text-muted-foreground"> / service</span>
               </div>
 

@@ -38,7 +38,7 @@ const ProviderDashboard = () => {
                 <p className="text-sm text-muted-foreground">{b.customerName} · {b.bookingDate}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-foreground">${b.price}</span>
+                <span className="text-sm font-semibold text-foreground">₹{b.price}</span>
                 <StatusBadge status={b.status} />
               </div>
             </div>

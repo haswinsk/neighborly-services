@@ -28,7 +28,7 @@ const ProviderEarningsPage = () => {
                 <p className="font-medium text-foreground">{b.serviceName}</p>
                 <p className="text-sm text-muted-foreground">{b.customerName} · {b.bookingDate}</p>
               </div>
-              <span className="text-lg font-bold text-success">${b.price}</span>
+              <span className="text-lg font-bold text-success">₹{b.price}</span>
             </div>
           ))}
           {completed.length === 0 && <p className="text-muted-foreground">No completed jobs yet.</p>}
