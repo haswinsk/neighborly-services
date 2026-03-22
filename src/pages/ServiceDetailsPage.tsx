@@ -63,7 +63,7 @@ const ServiceDetailsPage = () => {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="h-48 rounded-lg bg-gradient-to-br from-primary/5 to-primary/15 lg:h-64" />
+            <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-48 w-full rounded-lg object-cover lg:h-64" />
             <div className="mt-6">
               <span className="text-sm font-medium text-primary">{service.category}</span>
               <h1 className="mt-1 text-3xl font-bold text-foreground">{service.serviceName}</h1>
