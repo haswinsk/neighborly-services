@@ -57,7 +57,7 @@ const ProviderServicesPage = () => {
             <Textarea className="mt-1" placeholder="Describe your service..." />
           </div>
           <div>
-            <Label>Price ($)</Label>
+            <Label>Price (₹)</Label>
             <Input type="number" className="mt-1 w-40" placeholder="0" />
           </div>
           <div className="flex gap-2">
