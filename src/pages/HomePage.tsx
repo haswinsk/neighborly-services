@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { mockServices, mockReviews } from "@/data/mockData";
 import { StarRating } from "@/components/StarRating";
 import { useState } from "react";
+import { getServiceImage } from "@/data/serviceImages";
 
 const categories = [
   { name: "Plumbing", icon: Droplets },
@@ -115,14 +116,14 @@ const HomePage = () => {
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {topServices.map((service) => (
               <Link key={service.id} to={`/services/${service.id}`} className="service-card overflow-hidden">
-                <div className="h-32 bg-gradient-to-br from-primary/5 to-primary/10" />
+                <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-32 w-full object-cover" />
                 <div className="p-5">
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="text-xs font-medium text-primary">{service.category}</span>
                       <h3 className="mt-1 font-semibold text-foreground">{service.serviceName}</h3>
                     </div>
-                    <span className="text-lg font-bold text-foreground">${service.price}</span>
+                    <span className="text-lg font-bold text-foreground">₹{service.price}</span>
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{service.description}</p>
                   <div className="mt-4 flex items-center justify-between">

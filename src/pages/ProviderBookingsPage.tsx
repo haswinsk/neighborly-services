@@ -29,7 +29,7 @@ const ProviderBookingsPage = () => {
                 <p className="font-semibold text-foreground">{b.serviceName}</p>
                 <p className="text-sm text-muted-foreground">Customer: {b.customerName}</p>
                 <p className="text-sm text-muted-foreground">Date: {b.bookingDate}</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">${b.price}</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">₹{b.price}</p>
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={b.status} />

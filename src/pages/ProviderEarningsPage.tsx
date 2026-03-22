@@ -14,9 +14,9 @@ const ProviderEarningsPage = () => {
       <p className="mt-1 text-muted-foreground">Track your income and completed jobs</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard title="Total Earnings" value={`$${totalEarnings}`} icon={DollarSign} />
+        <StatCard title="Total Earnings" value={`₹${totalEarnings}`} icon={DollarSign} />
         <StatCard title="Completed Jobs" value={completed.length} icon={CheckCircle} />
-        <StatCard title="Avg per Job" value={`$${completed.length ? Math.round(totalEarnings / completed.length) : 0}`} icon={TrendingUp} />
+        <StatCard title="Avg per Job" value={`₹${completed.length ? Math.round(totalEarnings / completed.length) : 0}`} icon={TrendingUp} />
       </div>
 
       <div className="mt-8">
@@ -28,7 +28,7 @@ const ProviderEarningsPage = () => {
                 <p className="font-medium text-foreground">{b.serviceName}</p>
                 <p className="text-sm text-muted-foreground">{b.customerName} · {b.bookingDate}</p>
               </div>
-              <span className="text-lg font-bold text-success">${b.price}</span>
+              <span className="text-lg font-bold text-success">₹{b.price}</span>
             </div>
           ))}
           {completed.length === 0 && <p className="text-muted-foreground">No completed jobs yet.</p>}

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wrench, MapPin, ArrowLeft, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getServiceImage } from "@/data/serviceImages";
 
 const ServiceDetailsPage = () => {
   const { id } = useParams();
@@ -62,7 +63,7 @@ const ServiceDetailsPage = () => {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="h-48 rounded-lg bg-gradient-to-br from-primary/5 to-primary/15 lg:h-64" />
+            <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-48 w-full rounded-lg object-cover lg:h-64" />
             <div className="mt-6">
               <span className="text-sm font-medium text-primary">{service.category}</span>
               <h1 className="mt-1 text-3xl font-bold text-foreground">{service.serviceName}</h1>
@@ -97,7 +98,7 @@ const ServiceDetailsPage = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8 rounded-lg border bg-card p-6 shadow-sm">
               <div className="text-center">
-                <span className="text-3xl font-bold text-foreground">${service.price}</span>
+                <span className="text-3xl font-bold text-foreground">₹{service.price}</span>
                 <span className="text-muted-foreground"> / service</span>
               </div>
 

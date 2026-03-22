@@ -19,7 +19,7 @@ const ProviderDashboard = () => {
       <p className="mt-1 text-muted-foreground">Manage your services and bookings</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Earnings" value={`$${earnings}`} icon={DollarSign} />
+        <StatCard title="Total Earnings" value={`₹${earnings}`} icon={DollarSign} />
         <StatCard title="Active Services" value={myServices.length} icon={Star} />
         <StatCard title="Pending Requests" value={pending.length} icon={ClipboardList} />
         <StatCard title="Completed Jobs" value={completed.length} icon={CheckCircle} />
@@ -38,7 +38,7 @@ const ProviderDashboard = () => {
                 <p className="text-sm text-muted-foreground">{b.customerName} · {b.bookingDate}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-foreground">${b.price}</span>
+                <span className="text-sm font-semibold text-foreground">₹{b.price}</span>
                 <StatusBadge status={b.status} />
               </div>
             </div>

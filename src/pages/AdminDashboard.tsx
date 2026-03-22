@@ -21,7 +21,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Users" value={mockUsers.length} icon={Users} />
         <StatCard title="Services" value={mockServices.length} icon={Wrench} />
         <StatCard title="Bookings" value={mockBookings.length} icon={Calendar} />
-        <StatCard title="Revenue" value={`$${totalRevenue}`} icon={DollarSign} />
+        <StatCard title="Revenue" value={`₹${totalRevenue}`} icon={DollarSign} />
       </div>
 
       <div className="mt-8">
@@ -37,7 +37,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground">{b.customerName} → {b.providerName}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-foreground">${b.price}</span>
+                <span className="text-sm font-semibold text-foreground">₹{b.price}</span>
                 <StatusBadge status={b.status} />
               </div>
             </div>
