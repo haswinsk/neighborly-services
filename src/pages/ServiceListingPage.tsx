@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/StarRating";
 import { useAuth } from "@/contexts/AuthContext";
+import { getServiceImage } from "@/data/serviceImages";
 
 const ServiceListingPage = () => {
   const [searchParams] = useSearchParams();
