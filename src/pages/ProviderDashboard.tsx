@@ -19,7 +19,7 @@ const ProviderDashboard = () => {
       <p className="mt-1 text-muted-foreground">Manage your services and bookings</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Earnings" value={`$${earnings}`} icon={DollarSign} />
+        <StatCard title="Total Earnings" value={`₹${earnings}`} icon={DollarSign} />
         <StatCard title="Active Services" value={myServices.length} icon={Star} />
         <StatCard title="Pending Requests" value={pending.length} icon={ClipboardList} />
         <StatCard title="Completed Jobs" value={completed.length} icon={CheckCircle} />
