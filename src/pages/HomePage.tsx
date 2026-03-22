@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { mockServices, mockReviews } from "@/data/mockData";
 import { StarRating } from "@/components/StarRating";
 import { useState } from "react";
+import { getServiceImage } from "@/data/serviceImages";
 
 const categories = [
   { name: "Plumbing", icon: Droplets },
