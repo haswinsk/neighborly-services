@@ -130,7 +130,11 @@ const HomePage = () => {
                     <StarRating rating={service.rating} size={14} />
                     <span className="text-xs text-muted-foreground">{service.reviewCount} reviews</span>
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">by {service.providerName}</p>
+                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    <span>{service.providerLocation}</span>
+                    <span className="ml-1">· by {service.providerName}</span>
+                  </div>
                 </div>
               </Link>
             ))}

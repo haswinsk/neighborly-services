@@ -71,7 +71,11 @@ const ServiceListingPage = () => {
                   <StarRating rating={service.rating} size={14} />
                   <span className="text-lg font-bold text-foreground">₹{service.price}</span>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">by {service.providerName} · {service.reviewCount} reviews</p>
+                <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  <span>{service.providerLocation}</span>
+                  <span className="ml-1">· by {service.providerName} · {service.reviewCount} reviews</span>
+                </div>
               </div>
             </Link>
           ))}

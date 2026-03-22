@@ -68,6 +68,10 @@ const ServiceDetailsPage = () => {
               <span className="text-sm font-medium text-primary">{service.category}</span>
               <h1 className="mt-1 text-3xl font-bold text-foreground">{service.serviceName}</h1>
               <p className="mt-1 text-muted-foreground">by {service.providerName}</p>
+              <div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span>{service.providerLocation}</span>
+              </div>
               <div className="mt-4 flex items-center gap-4">
                 <StarRating rating={service.rating} />
                 <span className="text-sm text-muted-foreground">({service.reviewCount} reviews)</span>
