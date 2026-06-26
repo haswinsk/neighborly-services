@@ -104,7 +104,8 @@ const ServiceListingPage = () => {
         {/* ── DESKTOP SIDEBAR ── */}
         <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-l border-border bg-white h-full overflow-hidden shadow-xl">
           <MapFilters
-            services={services}
+            services={filteredServices}
+            allServices={services}
             selectedCategory={selectedCategory}
             selectedDistance={selectedDistance}
             searchQuery={searchQuery}
@@ -147,7 +148,8 @@ const ServiceListingPage = () => {
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto">
             <MapFilters
-              services={services}
+              services={filteredServices}
+              allServices={services}
               selectedCategory={selectedCategory}
               selectedDistance={selectedDistance}
               searchQuery={searchQuery}

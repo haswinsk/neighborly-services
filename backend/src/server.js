@@ -41,15 +41,30 @@ app.use(
   })
 );
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:8082",
+  "https://neighborly-services.vercel.app",
+  "https://neighborly-services.onrender.com",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:8080",
-      "http://localhost:8082",
-      "https://neighborly-services.vercel.app",
-      "https://neighborly-services.onrender.com"
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      // Allow all Vercel preview deployments (*.vercel.app) and exact matches
+      if (
+        ALLOWED_ORIGINS.includes(origin) ||
+        /^https:\/\/neighborly-services(-[a-z0-9]+)*\.vercel\.app$/.test(origin) ||
+        /^https:\/\/[a-z0-9-]+\.vusercontent\.net$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS: origin not allowed — ${origin}`));
+    },
     credentials: true,
   })
 );

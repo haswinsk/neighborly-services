@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Coordinates } from '@/lib/geolocation';
 import { sortByDistance, formatDistance, calculateDistance } from '@/lib/distance';
-import { CATEGORIES } from '@/lib/markerIcons';
+import { getCategoryColor } from '@/lib/markerIcons';
 import { Search, MapPin, Star } from 'lucide-react';
 
 interface Service {
@@ -15,11 +15,13 @@ interface Service {
   longitude?: number;
   providerLocation: string;
   image?: string;
-  distance?: number;
 }
 
 interface MapFiltersProps {
+  /** Already-filtered services — what to show in the list */
   services: Service[];
+  /** All services (unfiltered) — used to derive available category chips */
+  allServices: Service[];
   selectedCategory: string | null;
   selectedDistance: number | null;
   searchQuery: string;
@@ -42,6 +44,7 @@ const DISTANCE_OPTIONS: { label: string; value: number | null }[] = [
 
 export function MapFilters({
   services,
+  allServices,
   selectedCategory,
   selectedDistance,
   searchQuery,
@@ -53,20 +56,28 @@ export function MapFilters({
   selectedService,
   compact = false,
 }: MapFiltersProps) {
-  // Services are already filtered by parent — just sort by distance
-  const sortedServices = useMemo(() => {
-    return sortByDistance(services, userCoordinates);
-  }, [services, userCoordinates]);
+  // Sort the already-filtered list by distance
+  const sortedServices = useMemo(
+    () => sortByDistance(services, userCoordinates),
+    [services, userCoordinates]
+  );
+
+  // Derive unique categories from ALL services so chips never disappear when filtered
+  const availableCategories = useMemo(
+    () => Array.from(new Set(allServices.map((s) => s.category))).sort(),
+    [allServices]
+  );
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* ── Header / Filters ── */}
+      {/* Header + filters */}
       <div className="shrink-0 border-b border-border">
-        {/* Title */}
         {!compact && (
           <div className="px-4 pt-4 pb-3 border-b border-border/60">
             <h2 className="text-base font-bold text-foreground">Services Nearby</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Find providers around your location</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Find providers around your location
+            </p>
           </div>
         )}
 
@@ -83,9 +94,11 @@ export function MapFilters({
             />
           </div>
 
-          {/* Category chips — horizontal scroll */}
+          {/* Category chips */}
           <div>
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Category</p>
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Category
+            </p>
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
                 onClick={() => onCategoryChange(null)}
@@ -97,25 +110,32 @@ export function MapFilters({
               >
                 All
               </button>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => onCategoryChange(cat === selectedCategory ? null : cat)}
-                  className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full border transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+              {availableCategories.map((cat) => {
+                const color = getCategoryColor(cat);
+                const isActive = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => onCategoryChange(isActive ? null : cat)}
+                    style={isActive ? { backgroundColor: color, borderColor: color } : {}}
+                    className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full border transition-all ${
+                      isActive
+                        ? 'text-white shadow-sm'
+                        : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Distance chips */}
           <div>
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distance</p>
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Distance
+            </p>
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {DISTANCE_OPTIONS.map(({ label, value }) => (
                 <button
@@ -143,7 +163,7 @@ export function MapFilters({
         </div>
       </div>
 
-      {/* ── Service list ── */}
+      {/* Service list */}
       <div className="flex-1 overflow-y-auto">
         {sortedServices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -165,6 +185,7 @@ export function MapFilters({
                   : null;
 
               const isSelected = selectedService === service.id;
+              const color = getCategoryColor(service.category);
 
               return (
                 <li key={service.id}>
@@ -177,18 +198,19 @@ export function MapFilters({
                     }`}
                   >
                     <div className="flex gap-3 items-start">
-                      {/* Provider image or category fallback */}
-                      <div className="shrink-0 w-11 h-11 rounded-lg overflow-hidden bg-muted flex items-center justify-center text-lg">
+                      {/* Category colour dot instead of emoji */}
+                      <div
+                        className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                        style={{ backgroundColor: color }}
+                      >
                         {service.image ? (
                           <img
                             src={service.image}
                             alt={service.serviceName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
-                          <span className="text-lg">
-                            {getCategoryEmoji(service.category)}
-                          </span>
+                          service.category.slice(0, 2).toUpperCase()
                         )}
                       </div>
 
@@ -196,7 +218,7 @@ export function MapFilters({
                         <p className="font-semibold text-sm text-foreground leading-tight truncate">
                           {service.providerName}
                         </p>
-                        <p className="text-xs text-primary font-medium truncate mt-0.5">
+                        <p className="text-xs font-medium truncate mt-0.5" style={{ color }}>
                           {service.serviceName}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -225,18 +247,4 @@ export function MapFilters({
       </div>
     </div>
   );
-}
-
-function getCategoryEmoji(category: string): string {
-  const map: Record<string, string> = {
-    Plumbing: '🔧',
-    Electrical: '⚡',
-    Carpentry: '🔨',
-    'AC Repair': '❄️',
-    Cleaning: '🧹',
-    Tutoring: '📚',
-    Painting: '🎨',
-    'Pest Control': '🐛',
-  };
-  return map[category] ?? '📍';
 }

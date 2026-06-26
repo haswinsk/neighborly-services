@@ -48,13 +48,17 @@ function SyncView({ coords }: { coords: Coordinates }) {
   return null;
 }
 
-// Fit map to show both user and all visible provider markers
+// Fit map to show both user and all visible provider markers.
+// Re-fits whenever the services list changes (e.g. after a filter change).
 function FitBounds({ userCoords, services }: { userCoords: Coordinates; services: Service[] }) {
   const map = useMap();
-  const fittedRef = useRef(false);
+  // Track the previous service IDs so we only re-fit on a real change
+  const prevIdsRef = useRef<string>('');
 
   useEffect(() => {
-    if (fittedRef.current) return;
+    const currentIds = services.map((s) => s.id).sort().join(',');
+    if (currentIds === prevIdsRef.current) return;
+    prevIdsRef.current = currentIds;
 
     const positions: [number, number][] = [
       [userCoords.latitude, userCoords.longitude],
@@ -69,7 +73,9 @@ function FitBounds({ userCoords, services }: { userCoords: Coordinates; services
     if (positions.length > 1) {
       const bounds = L.latLngBounds(positions);
       map.fitBounds(bounds.pad(0.2), { animate: true, maxZoom: 14 });
-      fittedRef.current = true;
+    } else {
+      // No service markers — just centre on user
+      map.setView([userCoords.latitude, userCoords.longitude], 13, { animate: true });
     }
   }, [userCoords, services, map]);
 
