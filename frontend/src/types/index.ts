@@ -36,7 +36,7 @@ export interface Service {
   longitude?: number;
 }
 
-export type BookingStatus = "Requested" | "Accepted" | "In Progress" | "Completed" | "Rejected";
+export type BookingStatus = "Requested" | "Accepted" | "In Progress" | "CompletionRequested" | "Completed" | "Rejected";
 export type PaymentStatus = "Pending" | "Completed";
 
 export interface Booking {
