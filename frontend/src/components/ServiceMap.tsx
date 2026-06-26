@@ -304,6 +304,11 @@ export function ServiceMap({
         zoomControl={false}
         minZoom={12}
         maxZoom={19}
+        maxBounds={[
+          [10.5, 75.5],  // Southwest corner (Coimbatore region)
+          [11.5, 77.0],  // Northeast corner (Coimbatore region)
+        ]}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
