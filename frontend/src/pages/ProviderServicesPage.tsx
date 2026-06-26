@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 
 const ProviderServicesPage = () => {
   const { user } = useAuth();
@@ -20,6 +22,9 @@ const ProviderServicesPage = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [serviceAddress, setServiceAddress] = useState("");
+  const [serviceCity, setServiceCity] = useState("");
+  const [serviceState, setServiceState] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,6 +57,11 @@ const ProviderServicesPage = () => {
           category,
           description,
           price: Number(price),
+          address: serviceAddress || user?.address || "",
+          city: serviceCity || user?.city || "",
+          state: serviceState || user?.state || "",
+          latitude: user?.latitude,
+          longitude: user?.longitude,
         }),
       });
 
@@ -60,8 +70,11 @@ const ProviderServicesPage = () => {
       setCategory("");
       setDescription("");
       setPrice("");
+      setServiceAddress("");
+      setServiceCity("");
+      setServiceState("");
       setShowForm(false);
-      toast({ title: "Service saved!" });
+      toast({ title: "Service saved and visible on map!" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to save service";
       toast({ title: "Save failed", description: message, variant: "destructive" });
@@ -92,7 +105,7 @@ const ProviderServicesPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSave} className="mt-6 rounded-lg border bg-card p-6 space-y-4">
+        <form onSubmit={handleSave} className="mt-6 rounded-lg border bg-card p-6 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Service Name</Label>
@@ -118,7 +131,63 @@ const ProviderServicesPage = () => {
             <Label>Price (₹)</Label>
             <Input type="number" className="mt-1 w-40" placeholder="0" value={price} onChange={(e) => setPrice(e.target.value)} />
           </div>
-          <div className="flex gap-2">
+
+          {/* Service Location */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold text-foreground">Service Location</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Service location will use your provider location by default. Customize if serving a specific area.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <Label>Address</Label>
+                <Input className="mt-1" placeholder={user?.address || "Your address"} value={serviceAddress} onChange={(e) => setServiceAddress(e.target.value)} />
+              </div>
+              <div>
+                <Label>City</Label>
+                <Input className="mt-1" placeholder={user?.city || "City"} value={serviceCity} onChange={(e) => setServiceCity(e.target.value)} />
+              </div>
+              <div>
+                <Label>State</Label>
+                <Input className="mt-1" placeholder={user?.state || "State"} value={serviceState} onChange={(e) => setServiceState(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Location Map Preview */}
+            {user?.latitude && user?.longitude && (
+              <div className="mt-4">
+                <Label className="mb-2 block">Your Service Location Preview</Label>
+                <div className="h-48 rounded-lg border overflow-hidden bg-background">
+                  <MapContainer center={[user.latitude, user.longitude]} zoom={13} style={{ height: "100%", width: "100%" }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+                    <Marker position={[user.latitude, user.longitude]}>
+                      <Popup>
+                        <div className="text-sm">
+                          <p className="font-semibold">{user.name}</p>
+                          <p className="text-xs text-muted-foreground">{serviceAddress || user.address}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              </div>
+            )}
+
+            {!user?.latitude || !user?.longitude ? (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-2">
+                <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-yellow-700">
+                  <p className="font-medium">No location set</p>
+                  <p className="text-xs">Please set your provider location in your profile to show services on the map.</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex gap-2 border-t pt-4">
             <Button type="submit">Save Service</Button>
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
           </div>
