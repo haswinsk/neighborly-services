@@ -13,6 +13,23 @@ import { env } from "../config/env.js";
 
 const router = express.Router();
 
+router.get("/earnings/summary", requireAuth, requireRole("provider"), asyncHandler(async (req, res) => {
+  const completedBookings = await Booking.find({ providerId: req.user.id, status: "Completed" });
+
+  const grossEarnings = completedBookings.reduce((sum, booking) => sum + booking.price, 0);
+  const adminCommissionRate = env.adminCommissionRate;
+  const adminCommissionTotal = Math.round((grossEarnings * adminCommissionRate) / 100);
+  const netEarnings = grossEarnings - adminCommissionTotal;
+
+  return res.json({
+    grossEarnings,
+    adminCommissionRate,
+    adminCommissionTotal,
+    netEarnings,
+    completedJobsCount: completedBookings.length,
+  });
+}));
+
 router.get("/", requireAuth, asyncHandler(async (req, res) => {
   const query =
     req.user.role === "customer"
@@ -148,23 +165,6 @@ router.patch("/:id/payment-status", requireAuth, requireRole("customer"), asyncH
       providerEmail: provider?.email,
       providerLocation: provider?.location,
     },
-  });
-}));
-
-router.get("/earnings/summary", requireAuth, requireRole("provider"), asyncHandler(async (req, res) => {
-  const completedBookings = await Booking.find({ providerId: req.user.id, status: "Completed" });
-
-  const grossEarnings = completedBookings.reduce((sum, booking) => sum + booking.price, 0);
-  const adminCommissionRate = env.adminCommissionRate;
-  const adminCommissionTotal = Math.round((grossEarnings * adminCommissionRate) / 100);
-  const netEarnings = grossEarnings - adminCommissionTotal;
-
-  return res.json({
-    grossEarnings,
-    adminCommissionRate,
-    adminCommissionTotal,
-    netEarnings,
-    completedJobsCount: completedBookings.length,
   });
 }));
 
