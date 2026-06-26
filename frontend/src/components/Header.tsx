@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Wrench, Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import { useState } from "react";
 
 export const Header = () => {
@@ -25,8 +27,10 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur-sm transition-smooth shadow-soft">
-      <div className="container flex items-center justify-between py-4">
+    <>
+      <NotificationCenter />
+      <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur-sm transition-smooth shadow-soft">
+        <div className="container flex items-center justify-between py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-smooth hover:opacity-80">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
@@ -57,6 +61,7 @@ export const Header = () => {
 
         {/* Desktop Auth */}
         <div className="hidden md:flex items-center gap-3">
+          {isAuthenticated && <NotificationBell />}
           {isAuthenticated ? (
             <>
               <Link to="/profile">
@@ -151,8 +156,9 @@ export const Header = () => {
             </div>
           </div>
         </div>
-      )}
-    </header>
+        )}
+      </header>
+    </>
   );
 };
 
