@@ -30,6 +30,15 @@ router.post(
       throw new ApiError(409, "Email already exists");
     }
 
+    // Check for duplicate phone if provided
+    if (phone && phone.trim()) {
+      const phoneTrim = phone.trim();
+      const phoneExists = await prisma.user.findUnique({ where: { phone: phoneTrim } });
+      if (phoneExists) {
+        throw new ApiError(409, "Phone number already registered");
+      }
+    }
+
     const passwordHash = await bcrypt.hash(normalizedPassword, 10);
     const user = await prisma.user.create({
       data: {

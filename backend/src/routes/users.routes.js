@@ -114,4 +114,36 @@ router.get("/nearby-providers", requireAuth, asyncHandler(async (req, res) => {
   });
 }));
 
+// Update user profile
+router.patch("/:id", requireAuth, asyncHandler(async (req, res) => {
+  if (req.params.id !== req.user.id && req.user.role !== "admin") {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  const { name, phone, location, address, city, state, country } = req.body;
+  const updateData = {};
+
+  if (name !== undefined) updateData.name = name || req.user.name;
+  if (location !== undefined) updateData.location = location || "";
+  if (address !== undefined) updateData.address = address || "";
+  if (city !== undefined) updateData.city = city || "";
+  if (state !== undefined) updateData.state = state || "";
+  if (country !== undefined) updateData.country = country || "India";
+
+  // Check phone uniqueness if updating phone
+  if (phone !== undefined && phone) {
+    const phoneTrim = phone.trim();
+    if (phoneTrim && phoneTrim !== req.user.phone) {
+      const phoneExists = await prisma.user.findUnique({ where: { phone: phoneTrim } });
+      if (phoneExists) {
+        throw new ApiError(409, "Phone number already in use");
+      }
+      updateData.phone = phoneTrim;
+    }
+  }
+
+  const updatedUser = await prisma.user.update({ where: { id: req.params.id }, data: updateData });
+  return res.json({ user: sanitizeUser(updatedUser) });
+}));
+
 export default router;
