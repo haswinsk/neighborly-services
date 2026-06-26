@@ -147,12 +147,11 @@ function FitBounds({
     });
 
     if (positions.length > 1) {
-      // Show all markers - never zoom out beyond minZoom 12
+      // Show all markers with natural zoom calculation
       map.fitBounds(L.latLngBounds(positions), {
         animate: true,
         padding: [50, 50],
         maxZoom: 15,
-        minZoom: 12,
       });
     } else {
       // Single location - zoom to street level
@@ -325,11 +324,11 @@ export function ServiceMap({
         className="h-full w-full"
         style={{ zIndex: 0 }}
         zoomControl={false}
-        minZoom={12}
+        minZoom={4}
         maxZoom={19}
         maxBounds={[
-          [10.5, 75.5],  // Southwest corner (Coimbatore region)
-          [11.5, 77.0],  // Northeast corner (Coimbatore region)
+          [5.0, 65.0],    // Southwest corner (can see 5-6 countries)
+          [35.0, 100.0],  // Northeast corner (can see 5-6 countries)
         ]}
         maxBoundsViscosity={1.0}
       >
