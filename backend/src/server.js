@@ -94,7 +94,7 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    await connectDB(env.mongoUri);
+    await connectDB();
     app.listen(env.port, () => {
       console.log(`API server running on port ${env.port}`);
     });

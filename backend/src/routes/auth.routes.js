@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { User } from "../models/User.js";
+import prisma from "../config/db.js";
 import { createPublicId } from "../utils/id.js";
 import { sanitizeUser } from "../utils/sanitize.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -25,21 +25,23 @@ router.post(
     const normalizedPassword = assertRequiredString(password, "Password");
     const normalizedRole = assertEnum(role, USER_ROLES, "Role");
 
-    const existing = await User.findOne({ email: normalizedEmail });
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       throw new ApiError(409, "Email already exists");
     }
 
     const passwordHash = await bcrypt.hash(normalizedPassword, 10);
-    const user = await User.create({
-      id: createPublicId(normalizedRole === "provider" ? "p" : normalizedRole === "admin" ? "a" : "c"),
-      name: normalizedName,
-      email: normalizedEmail,
-      password: passwordHash,
-      role: normalizedRole,
-      phone: typeof phone === "string" ? phone.trim() : "",
-      location: typeof location === "string" ? location.trim() : "",
-      approved: normalizedRole === "provider" ? false : true,
+    const user = await prisma.user.create({
+      data: {
+        id: createPublicId(normalizedRole === "provider" ? "p" : normalizedRole === "admin" ? "a" : "c"),
+        name: normalizedName,
+        email: normalizedEmail,
+        password: passwordHash,
+        role: normalizedRole,
+        phone: typeof phone === "string" ? phone.trim() : "",
+        location: typeof location === "string" ? location.trim() : "",
+        approved: normalizedRole === "provider" ? false : true,
+      },
     });
 
     const token = signToken(user);
@@ -55,7 +57,7 @@ router.post(
     const normalizedEmail = assertEmail(email);
     const normalizedPassword = assertRequiredString(password, "Password");
 
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
       throw new ApiError(401, "Invalid credentials");
     }

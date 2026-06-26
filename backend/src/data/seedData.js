@@ -27,7 +27,7 @@ export const seedBookings = [
 ];
 
 export const seedReviews = [
-  { id: "r1", customerId: "c1", customerName: "John Doe", providerId: "p1", rating: 5, comment: "Excellent plumbing work! Fixed the leak quickly and professionally.", date: "2026-03-16" },
-  { id: "r2", customerId: "c2", customerName: "Jane Smith", providerId: "p2", rating: 5, comment: "Amazing tutor! My son's math grades improved significantly.", date: "2026-03-11" },
-  { id: "r3", customerId: "c1", customerName: "John Doe", providerId: "p2", rating: 4, comment: "Good AC repair service. A bit pricey but quality work.", date: "2026-03-05" },
+  { id: "r1", customerId: "c1", customerName: "John Doe", providerId: "p1", serviceId: "s1", rating: 5, comment: "Excellent plumbing work! Fixed the leak quickly and professionally.", date: "2026-03-16" },
+  { id: "r2", customerId: "c2", customerName: "Jane Smith", providerId: "p2", serviceId: "s6", rating: 5, comment: "Amazing tutor! My son's math grades improved significantly.", date: "2026-03-11" },
+  { id: "r3", customerId: "c1", customerName: "John Doe", providerId: "p2", serviceId: "s3", rating: 4, comment: "Good AC repair service. A bit pricey but quality work.", date: "2026-03-05" },
 ];

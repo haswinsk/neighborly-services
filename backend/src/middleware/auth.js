@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { User } from "../models/User.js";
+import prisma from "../config/db.js";
 import { sanitizeUser } from "../utils/sanitize.js";
 
 const getToken = (authHeader = "") => {
@@ -16,7 +16,7 @@ export const requireAuth = async (req, res, next) => {
     }
 
     const payload = jwt.verify(token, env.jwtSecret);
-    const user = await User.findOne({ id: payload.userId });
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
 
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });

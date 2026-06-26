@@ -1,20 +1,16 @@
 import bcrypt from "bcryptjs";
 import { connectDB } from "../config/db.js";
-import { env } from "../config/env.js";
-import { User } from "../models/User.js";
-import { Service } from "../models/Service.js";
-import { Booking } from "../models/Booking.js";
-import { Review } from "../models/Review.js";
+import prisma from "../config/db.js";
 import { seedUsers, seedServices, seedBookings, seedReviews } from "../data/seedData.js";
 
 const seed = async () => {
-  await connectDB(env.mongoUri);
+  await connectDB();
 
   await Promise.all([
-    User.deleteMany({}),
-    Service.deleteMany({}),
-    Booking.deleteMany({}),
-    Review.deleteMany({}),
+    prisma.user.deleteMany(),
+    prisma.service.deleteMany(),
+    prisma.booking.deleteMany(),
+    prisma.review.deleteMany(),
   ]);
 
   const users = await Promise.all(
@@ -24,10 +20,10 @@ const seed = async () => {
     }))
   );
 
-  await User.insertMany(users);
-  await Service.insertMany(seedServices);
-  await Booking.insertMany(seedBookings);
-  await Review.insertMany(seedReviews);
+  await prisma.user.createMany({ data: users });
+  await prisma.service.createMany({ data: seedServices });
+  await prisma.booking.createMany({ data: seedBookings });
+  await prisma.review.createMany({ data: seedReviews });
 
   console.log("Database seeded successfully");
   process.exit(0);

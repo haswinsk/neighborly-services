@@ -1,7 +1,5 @@
 import express from "express";
-import { Booking } from "../models/Booking.js";
-import { Service } from "../models/Service.js";
-import { User } from "../models/User.js";
+import prisma from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { createPublicId } from "../utils/id.js";
 import { sanitizeDoc } from "../utils/sanitize.js";
@@ -14,18 +12,18 @@ import { env } from "../config/env.js";
 const router = express.Router();
 
 router.get("/", requireAuth, asyncHandler(async (req, res) => {
-  const query =
+  const where =
     req.user.role === "customer"
       ? { customerId: req.user.id }
       : req.user.role === "provider"
       ? { providerId: req.user.id }
       : {};
 
-  const bookings = await Booking.find(query).sort({ createdAt: -1 });
+  const bookings = await prisma.booking.findMany({ where, orderBy: { createdAt: 'desc' } });
 
   if (req.user.role === "customer") {
     const providerIds = [...new Set(bookings.map((booking) => booking.providerId))];
-    const providers = await User.find({ id: { $in: providerIds }, role: "provider" }).select("id phone email location");
+    const providers = await prisma.user.findMany({ where: { id: { in: providerIds }, role: "provider" }, select: { id: true, phone: true, email: true, location: true } });
     const providerContactById = new Map(
       providers.map((provider) => [provider.id, { phone: provider.phone, email: provider.email, location: provider.location }])
     );
@@ -59,30 +57,32 @@ router.post(
     const normalizedServiceId = assertRequiredString(serviceId, "serviceId");
     const normalizedBookingDate = assertRequiredString(bookingDate, "bookingDate");
 
-    const service = await Service.findOne({ id: normalizedServiceId });
+    const service = await prisma.service.findUnique({ where: { id: normalizedServiceId } });
     if (!service) {
       throw new ApiError(404, "Service not found");
     }
 
-    const provider = await User.findOne({ id: service.providerId, role: "provider" }).select("approved");
+    const provider = await prisma.user.findUnique({ where: { id: service.providerId, role: "provider" }, select: { approved: true } });
     if (!provider || provider.approved !== true) {
       throw new ApiError(400, "Service provider is not approved");
     }
 
-    const customer = await User.findOne({ id: req.user.id });
+    const customer = await prisma.user.findUnique({ where: { id: req.user.id } });
 
-    const booking = await Booking.create({
-      id: createPublicId("b"),
-      customerId: req.user.id,
-      customerName: customer?.name || req.user.name,
-      providerId: service.providerId,
-      providerName: service.providerName,
-      serviceId: service.id,
-      serviceName: service.serviceName,
-      bookingDate: normalizedBookingDate,
-      status: "Requested",
-      paymentStatus: "Pending",
-      price: service.price,
+    const booking = await prisma.booking.create({
+      data: {
+        id: createPublicId("b"),
+        customerId: req.user.id,
+        customerName: customer?.name || req.user.name,
+        providerId: service.providerId,
+        providerName: service.providerName,
+        serviceId: service.id,
+        serviceName: service.serviceName,
+        bookingDate: normalizedBookingDate,
+        status: "Requested",
+        paymentStatus: "Pending",
+        price: service.price,
+      },
     });
 
     return res.status(201).json({ booking: sanitizeDoc(booking) });
@@ -92,7 +92,7 @@ router.post(
 router.patch("/:id/status", requireAuth, asyncHandler(async (req, res) => {
   const status = assertEnum(req.body.status, BOOKING_STATUSES, "status");
 
-  const booking = await Booking.findOne({ id: req.params.id });
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
   if (!booking) throw new ApiError(404, "Booking not found");
 
   if (req.user.role === "customer") {
@@ -100,29 +100,47 @@ router.patch("/:id/status", requireAuth, asyncHandler(async (req, res) => {
       throw new ApiError(403, "Forbidden");
     }
 
+    // Customers can only change status from CompletionRequested to Completed
     if (status !== "Completed") {
-      throw new ApiError(400, "Customers can only confirm completion");
+      throw new ApiError(400, "Customers can only mark booking as completed");
     }
 
-    const canConfirm = booking.status === "Accepted" || booking.status === "In Progress";
-    if (!canConfirm) {
-      throw new ApiError(400, "Booking cannot be marked as completed in current state");
+    if (booking.status !== "CompletionRequested") {
+      throw new ApiError(400, "Booking must be in CompletionRequested status to be marked as completed");
     }
+  } else if (req.user.role === "provider") {
+    if (booking.providerId !== req.user.id) {
+      throw new ApiError(403, "Forbidden");
+    }
+
+    // Provider status transition validation
+    const validTransitions = {
+      "Requested": ["Accepted", "Rejected"],
+      "Accepted": ["In Progress"],
+      "In Progress": ["CompletionRequested"],
+      "CompletionRequested": [],
+      "Completed": [],
+      "Rejected": [],
+    };
+
+    const allowedStatuses = validTransitions[booking.status];
+    if (!allowedStatuses || !allowedStatuses.includes(status)) {
+      throw new ApiError(400, `Cannot change status from "${booking.status}" to "${status}"`);
+    }
+  } else if (req.user.role === "admin") {
+    // Admin can change to any status
   } else {
-    const canEdit = req.user.role === "admin" || (req.user.role === "provider" && booking.providerId === req.user.id);
-    if (!canEdit) throw new ApiError(403, "Forbidden");
+    throw new ApiError(403, "Forbidden");
   }
 
-  booking.status = status;
-  await booking.save();
-
-  return res.json({ booking: sanitizeDoc(booking) });
+  const updatedBooking = await prisma.booking.update({ where: { id: req.params.id }, data: { status } });
+  return res.json({ booking: sanitizeDoc(updatedBooking) });
 }));
 
 router.patch("/:id/payment-status", requireAuth, requireRole("customer"), asyncHandler(async (req, res) => {
   const paymentStatus = assertEnum(req.body.paymentStatus, PAYMENT_STATUSES, "paymentStatus");
 
-  const booking = await Booking.findOne({ id: req.params.id });
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
   if (!booking) throw new ApiError(404, "Booking not found");
 
   if (booking.customerId !== req.user.id) {
@@ -133,17 +151,21 @@ router.patch("/:id/payment-status", requireAuth, requireRole("customer"), asyncH
     throw new ApiError(400, "Customers can only mark payment as completed");
   }
 
-  if (booking.status !== "Completed") {
-    throw new ApiError(400, "Complete the service before completing payment");
+  if (booking.status !== "CompletionRequested") {
+    throw new ApiError(400, "Provider must request completion before payment");
   }
 
-  booking.paymentStatus = "Completed";
-  await booking.save();
-
-  const provider = await User.findOne({ id: booking.providerId, role: "provider" }).select("phone email location");
+  const updatedBooking = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: {
+      paymentStatus: "Completed",
+      status: "Completed",
+    },
+  });
+  const provider = await prisma.user.findUnique({ where: { id: booking.providerId, role: "provider" }, select: { phone: true, email: true, location: true } });
   return res.json({
     booking: {
-      ...sanitizeDoc(booking),
+      ...sanitizeDoc(updatedBooking),
       providerPhone: provider?.phone,
       providerEmail: provider?.email,
       providerLocation: provider?.location,
@@ -152,7 +174,7 @@ router.patch("/:id/payment-status", requireAuth, requireRole("customer"), asyncH
 }));
 
 router.get("/earnings/summary", requireAuth, requireRole("provider"), asyncHandler(async (req, res) => {
-  const completedBookings = await Booking.find({ providerId: req.user.id, status: "Completed" });
+  const completedBookings = await prisma.booking.findMany({ where: { providerId: req.user.id, status: "Completed" } });
 
   const grossEarnings = completedBookings.reduce((sum, booking) => sum + booking.price, 0);
   const adminCommissionRate = env.adminCommissionRate;

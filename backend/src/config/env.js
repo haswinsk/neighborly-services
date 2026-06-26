@@ -10,7 +10,7 @@ const parseNumber = (value, fallback) => {
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 5000,
-  mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/neighborly_services",
+  databaseUrl: process.env.DATABASE_URL || "postgresql://127.0.0.1:5432/neighborly_services",
   jwtSecret: process.env.JWT_SECRET || "dev_secret",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
   adminCommissionRate: parseNumber(process.env.ADMIN_COMMISSION_RATE, 10),
@@ -22,8 +22,8 @@ export const env = {
 env.isProduction = env.nodeEnv === "production";
 
 if (env.isProduction) {
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI is required in production");
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required in production");
   }
 
   if (!process.env.CLIENT_URL) {

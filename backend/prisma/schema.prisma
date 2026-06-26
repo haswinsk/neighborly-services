@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("customer")
+  phone     String   @default("")
+  location  String   @default("")
+  avatar    String   @default("")
+  approved  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  servicesProvided Service[] @relation("ProviderServices")
+  bookingsAsCustomer Booking[] @relation("CustomerBookings")
+  bookingsAsProvider Booking[] @relation("ProviderBookings")
+  reviewsGiven Review[] @relation("CustomerReviews")
+  reviewsReceived Review[] @relation("ProviderReviews")
+}
+
+model Service {
+  id               String   @id @default(uuid())
+  serviceName      String
+  description      String
+  price            Float
+  providerId       String
+  providerName     String
+  providerLocation String
+  category         String
+  rating           Float    @default(0)
+  reviewCount      Int      @default(0)
+  image            String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  provider    User      @relation("ProviderServices", fields: [providerId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+  reviews     Review[]
+}
+
+model Booking {
+  id             String   @id @default(uuid())
+  customerId     String
+  customerName   String
+  providerId     String
+  providerName   String
+  serviceId      String
+  serviceName    String
+  bookingDate    String
+  status         String   @default("Requested")
+  paymentStatus  String   @default("Pending")
+  price          Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer User @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User @relation("ProviderBookings", fields: [providerId], references: [id], onDelete: Cascade)
+  service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  customerId   String
+  customerName String
+  providerId   String
+  serviceId    String
+  rating       Int
+  comment      String
+  date         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer User @relation("CustomerReviews", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User @relation("ProviderReviews", fields: [providerId], references: [id], onDelete: Cascade)
+  service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}

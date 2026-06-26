@@ -1,5 +1,20 @@
-import mongoose from "mongoose";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
 
-export const connectDB = async (mongoUri) => {
-  await mongoose.connect(mongoUri);
+const prisma = new PrismaClient();
+
+export const connectDB = async () => {
+  try {
+    await prisma.$connect();
+    console.log("Database connected successfully");
+  } catch (error) {
+    console.error("Failed to connect to database", error);
+    throw error;
+  }
 };
+
+export const disconnectDB = async () => {
+  await prisma.$disconnect();
+};
+
+export default prisma;
