@@ -26,10 +26,11 @@ interface ServiceMapProps {
   userCoordinates: Coordinates;
   selectedService?: string;
   onMarkerClick?: (serviceId: string) => void;
+  onLocationUpdate?: (coordinates: Coordinates) => void;
 }
 
 // Map controls component
-function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
+function MapControls({ userCoordinates, onLocationUpdate }: { userCoordinates: Coordinates; onLocationUpdate?: (coordinates: Coordinates) => void }) {
   const map = useMap();
   const [isLocating, setIsLocating] = useState(false);
 
@@ -59,6 +60,11 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
               duration: 0.5,
             });
             
+            // Notify parent component of new location
+            if (onLocationUpdate) {
+              onLocationUpdate({ latitude: newLat, longitude: newLng });
+            }
+            
             setIsLocating(false);
           },
           (error) => {
@@ -74,6 +80,11 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
                   animate: true,
                   duration: 0.5,
                 });
+                
+                // Notify parent component of new location
+                if (onLocationUpdate) {
+                  onLocationUpdate({ latitude: newLat, longitude: newLng });
+                }
                 
                 setIsLocating(false);
               },
@@ -179,6 +190,7 @@ export function ServiceMap({
   userCoordinates,
   selectedService,
   onMarkerClick,
+  onLocationUpdate,
 }: ServiceMapProps) {
   const [centerCoords, setCenterCoords] = useState<[number, number]>([
     userCoordinates.latitude,
@@ -259,7 +271,7 @@ export function ServiceMap({
           );
         })}
 
-        <MapControls userCoordinates={userCoordinates} />
+        <MapControls userCoordinates={userCoordinates} onLocationUpdate={onLocationUpdate} />
       </MapContainer>
     </div>
   );

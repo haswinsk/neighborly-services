@@ -14,8 +14,17 @@ const ServiceListingPage = () => {
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [userCoordinates, setUserCoordinates] = useState<Coordinates | null>(null);
   const { isAuthenticated } = useAuth();
   const { coordinates, loading } = useGeolocation();
+
+  // Update user coordinates when GPS loads or when manually located
+  useEffect(() => {
+    if (coordinates) {
+      console.log('[v0] Setting initial GPS coordinates:', coordinates);
+      setUserCoordinates(coordinates);
+    }
+  }, [coordinates]);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -39,8 +48,13 @@ const ServiceListingPage = () => {
     window.location.href = `/services/${serviceId}`;
   };
 
+  const handleLocationUpdate = (newCoordinates: Coordinates) => {
+    console.log('[v0] Location updated from map:', newCoordinates);
+    setUserCoordinates(newCoordinates);
+  };
+
   // Show map immediately even while loading coordinates
-  if (!coordinates) {
+  if (!userCoordinates) {
     return null;
   }
 
@@ -53,9 +67,10 @@ const ServiceListingPage = () => {
         <div className="hidden md:flex flex-1 relative h-full">
           <ServiceMap
             services={services}
-            userCoordinates={coordinates as Coordinates}
+            userCoordinates={userCoordinates}
             selectedService={selectedService || undefined}
             onMarkerClick={handleServiceSelect}
+            onLocationUpdate={handleLocationUpdate}
           />
         </div>
 
@@ -67,7 +82,7 @@ const ServiceListingPage = () => {
               selectedCategory={selectedCategory}
               selectedDistance={selectedDistance}
               searchQuery={searchQuery}
-              userCoordinates={coordinates as Coordinates}
+              userCoordinates={userCoordinates}
               onCategoryChange={setSelectedCategory}
               onDistanceChange={setSelectedDistance}
               onSearchChange={setSearchQuery}
@@ -75,54 +90,6 @@ const ServiceListingPage = () => {
               selectedService={selectedService || undefined}
             />
           </div>
-        </div>
-      </div>
-
-      {/* Mobile Map Button */}
-      <div className="md:hidden fixed bottom-6 right-6 z-40">
-        <Button
-          onClick={() => {
-            const mapElement = document.querySelector("[data-map-mobile]");
-            if (mapElement) {
-              mapElement.classList.toggle("hidden");
-            }
-          }}
-          className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-all transform hover:scale-110 flex items-center justify-center"
-          title="View Map"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 20l-5.447-2.724A1 1 0 003 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6.553 3.276A1 1 0 0118 20.382V9.618a1 1 0 00-1.447-.894L9 11m0 13V7m6-4l5.447-2.724A1 1 0 0121 3.618v10.764a1 1 0 01-1.447.894L15 10m0 7v6m0-13V5"
-            />
-          </svg>
-        </Button>
-      </div>
-
-      {/* Mobile Map Modal */}
-      <div
-        data-map-mobile
-        className="hidden md:hidden fixed inset-0 z-30 bg-black/50"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            e.currentTarget.classList.add("hidden");
-          }
-        }}
-      >
-        <div className="bg-white h-full w-full">
-          <ServiceMap
-            services={services}
-            userCoordinates={coordinates as Coordinates}
-            selectedService={selectedService || undefined}
-            onMarkerClick={handleServiceSelect}
-          />
         </div>
       </div>
     </div>
