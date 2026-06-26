@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
 import { Coordinates } from '@/lib/geolocation';
@@ -33,6 +33,62 @@ interface ServiceMapProps {
   selectedService?: string;
   onMarkerClick?: (serviceId: string) => void;
   onBookNow?: (serviceId: string) => void;
+}
+
+// ── Focus on selected service marker with smooth animation ─────────────────
+function FocusMarker({
+  selectedService,
+  services,
+}: {
+  selectedService?: string;
+  services: ServiceMapService[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedService) return;
+
+    const service = services.find((s) => s.id === selectedService);
+    if (!service || !service.latitude || !service.longitude) return;
+
+    // Smooth pan and zoom to selected marker
+    map.flyTo([service.latitude, service.longitude], 16, {
+      duration: 1.5,
+      easeLinearity: 0.25,
+    });
+  }, [selectedService, services, map]);
+
+  return null;
+}
+
+// ── Routing polyline between customer and provider ─────────────────────────
+function RoutingLine({
+  customerCoords,
+  providerCoords,
+}: {
+  customerCoords?: Coordinates | null;
+  providerCoords?: Coordinates | null;
+}) {
+  if (!customerCoords || !providerCoords) return null;
+
+  const positions: [number, number][] = [
+    [customerCoords.latitude, customerCoords.longitude],
+    [providerCoords.latitude, providerCoords.longitude],
+  ];
+
+  return (
+    <Polyline
+      positions={positions}
+      pathOptions={{
+        color: '#3b82f6',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '8, 4',
+        lineCap: 'round',
+        lineJoin: 'round',
+      }}
+    />
+  );
 }
 
 // ── Re-fit bounds whenever the visible service set changes ──────────────────
@@ -254,6 +310,25 @@ export function ServiceMap({
           services={services}
           customerCoords={customerCoordinates}
         />
+
+        {/* Focus on selected provider with smooth animation */}
+        <FocusMarker selectedService={selectedService} services={services} />
+
+        {/* Show routing line from customer to selected provider (provider view) */}
+        {selectedService && customerCoordinates && (
+          <RoutingLine
+            customerCoords={customerCoordinates}
+            providerCoords={
+              services.find((s) => s.id === selectedService)?.latitude && 
+              services.find((s) => s.id === selectedService)?.longitude
+                ? {
+                    latitude: services.find((s) => s.id === selectedService)?.latitude!,
+                    longitude: services.find((s) => s.id === selectedService)?.longitude!,
+                  }
+                : undefined
+            }
+          />
+        )}
 
         {/* My location (blue) */}
         <Marker
