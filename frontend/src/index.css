@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 28% 17%;
+    --background: 0 0% 99%;
+    --foreground: 220 15% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
+    --card-foreground: 220 15% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
+    --popover-foreground: 220 15% 12%;
 
-    --primary: 217 91% 60%;
+    --primary: 220 90% 56%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96%;
-    --secondary-foreground: 215 28% 17%;
+    --secondary-foreground: 220 15% 12%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 91%;
+    --muted-foreground: 220 12% 48%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 215 28% 17%;
+    --accent: 220 90% 56%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -36,20 +36,20 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 90% 56%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 28% 17%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-foreground: 220 15% 12%;
+    --sidebar-primary: 220 90% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 215 28% 17%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent-foreground: 220 15% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 220 90% 56%;
   }
 
   .dark {
@@ -99,10 +99,26 @@
 
 @layer utilities {
   .stat-card {
-    @apply bg-card rounded-lg border p-6 shadow-sm;
+    @apply bg-card rounded-xl border border-border p-6 shadow-sm transition-all duration-200 hover:shadow-md;
   }
 
   .service-card {
-    @apply bg-card rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+    @apply bg-card rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  .glass {
+    @apply backdrop-blur-xl bg-white/80;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-slate-50;
+  }
+
+  .badge-primary {
+    @apply inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary;
+  }
+
+  .text-balance-title {
+    @apply text-balance;
   }
 }
