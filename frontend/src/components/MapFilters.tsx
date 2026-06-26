@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Coordinates } from '@/lib/geolocation';
-import { sortByDistance, calculateDistance, formatDistance } from '@/lib/distance';
+import { sortByDistance, formatDistance } from '@/lib/distance';
 import { CATEGORIES } from '@/lib/markerIcons';
 import { Search, MapPin, Star } from 'lucide-react';
 
@@ -53,38 +53,10 @@ export function MapFilters({
   selectedService,
   compact = false,
 }: MapFiltersProps) {
-  const filteredAndSortedServices = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-
-    const filtered = services.filter((service) => {
-      // 1. Category filter
-      if (selectedCategory && service.category !== selectedCategory) return false;
-
-      // 2. Distance filter — only apply when service has coordinates
-      if (selectedDistance !== null) {
-        if (!service.latitude || !service.longitude) return false;
-        const dist = calculateDistance(userCoordinates, {
-          latitude: service.latitude,
-          longitude: service.longitude,
-        });
-        if (dist > selectedDistance) return false;
-      }
-
-      // 3. Search filter — independent of distance/category
-      if (q) {
-        const match =
-          service.providerName.toLowerCase().includes(q) ||
-          service.serviceName.toLowerCase().includes(q) ||
-          service.category.toLowerCase().includes(q) ||
-          service.providerLocation.toLowerCase().includes(q);
-        if (!match) return false;
-      }
-
-      return true;
-    });
-
-    return sortByDistance(filtered, userCoordinates);
-  }, [services, selectedCategory, selectedDistance, searchQuery, userCoordinates]);
+  // Services are already filtered by parent — just sort by distance
+  const sortedServices = useMemo(() => {
+    return sortByDistance(services, userCoordinates);
+  }, [services, userCoordinates]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -165,15 +137,15 @@ export function MapFilters({
         {/* Results count */}
         <div className="px-4 py-2 bg-muted/40 border-t border-border/60">
           <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{filteredAndSortedServices.length}</span>
-            {' '}service{filteredAndSortedServices.length !== 1 ? 's' : ''} found
+            <span className="font-semibold text-foreground">{sortedServices.length}</span>
+            {' '}service{sortedServices.length !== 1 ? 's' : ''} found
           </p>
         </div>
       </div>
 
       {/* ── Service list ── */}
       <div className="flex-1 overflow-y-auto">
-        {filteredAndSortedServices.length === 0 ? (
+        {sortedServices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <MapPin className="w-10 h-10 text-muted-foreground/40 mb-3" />
             <p className="text-sm font-medium text-foreground">No services found</p>
@@ -183,7 +155,7 @@ export function MapFilters({
           </div>
         ) : (
           <ul>
-            {filteredAndSortedServices.map((service) => {
+            {sortedServices.map((service) => {
               const distance =
                 service.latitude && service.longitude
                   ? calculateDistance(userCoordinates, {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
@@ -6,6 +6,7 @@ import { useGeolocation, DEFAULT_COORDINATES, Coordinates } from "@/lib/geolocat
 import { ServiceMap } from "@/components/ServiceMap";
 import { MapFilters } from "@/components/MapFilters";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { calculateDistance } from "@/lib/distance";
 
 const ServiceListingPage = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -25,6 +26,38 @@ const ServiceListingPage = () => {
       setUserCoordinates(coordinates);
     }
   }, [coordinates]);
+
+  // Compute filtered services whenever filters or services change
+  const filteredServices = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    return services.filter((service) => {
+      // 1. Category filter
+      if (selectedCategory && service.category !== selectedCategory) return false;
+
+      // 2. Distance filter
+      if (selectedDistance !== null) {
+        if (!service.latitude || !service.longitude) return false;
+        const dist = calculateDistance(userCoordinates, {
+          latitude: service.latitude,
+          longitude: service.longitude,
+        });
+        if (dist > selectedDistance) return false;
+      }
+
+      // 3. Search filter
+      if (q) {
+        const match =
+          service.providerName?.toLowerCase().includes(q) ||
+          service.serviceName?.toLowerCase().includes(q) ||
+          service.category?.toLowerCase().includes(q) ||
+          service.providerLocation?.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+
+      return true;
+    });
+  }, [services, selectedCategory, selectedDistance, searchQuery, userCoordinates]);
 
   useEffect(() => {
     apiRequest<{ services: Service[] }>("/services")
@@ -60,7 +93,7 @@ const ServiceListingPage = () => {
         {/* ── MAP (always visible, full area on mobile) ── */}
         <div className="flex-1 h-full relative">
           <ServiceMap
-            services={services}
+            services={filteredServices}
             userCoordinates={userCoordinates}
             selectedService={selectedService || undefined}
             onMarkerClick={handleServiceSelect}
@@ -101,7 +134,7 @@ const ServiceListingPage = () => {
             <div className="flex items-center gap-2">
               <div className="w-8 h-1 rounded-full bg-gray-300 mx-auto" />
               <span className="text-sm font-semibold text-foreground ml-1">
-                {services.length} services nearby
+                {filteredServices.length} services nearby
               </span>
             </div>
             {mobileSidebarOpen ? (
