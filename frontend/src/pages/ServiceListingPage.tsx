@@ -23,6 +23,15 @@ const ServiceListingPage = () => {
   const { coordinates, loading } = useGeolocation();
   const navigate = useNavigate();
 
+  // Default location (Perundurai) while user location is loading
+  const DEFAULT_LOCATION: Coordinates = {
+    latitude: 11.0089,
+    longitude: 76.9706,
+  };
+
+  // Use user location if available, otherwise default to Perundurai
+  const displayCoordinates = coordinates || DEFAULT_LOCATION;
+
   useEffect(() => {
     apiRequest<{ services: Service[] }>("/services")
       .then((res) => setServices(res.services))
@@ -35,7 +44,8 @@ const ServiceListingPage = () => {
     return services.filter((service) => {
       if (selectedCategory && service.category !== selectedCategory) return false;
 
-      if (selectedDistance && coordinates) {
+      // Only apply distance filter if user has actual coordinates (not default location)
+      if (selectedDistance && coordinates && coordinates !== DEFAULT_LOCATION) {
         if (!service.latitude || !service.longitude) return false;
         const dist = calculateDistance(coordinates as Coordinates, {
           latitude: service.latitude,
@@ -62,21 +72,17 @@ const ServiceListingPage = () => {
     navigate(`/services/${serviceId}`);
   }, [navigate]);
 
-  if (loading || !coordinates) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
-        <div className="flex-1 flex flex-col items-center justify-center gap-3">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground text-sm">Detecting your location...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
+
+      {/* Show location detection indicator while loading */}
+      {loading && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-sm text-blue-700">
+          <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <span>Detecting your location...</span>
+        </div>
+      )}
 
       {/* Main content: Map + Sidebar */}
       <div className="flex-1 flex overflow-hidden relative">
@@ -85,7 +91,7 @@ const ServiceListingPage = () => {
         <div className="hidden md:flex flex-1 relative">
           <ServiceMap
             services={filteredServices}
-            userCoordinates={coordinates as Coordinates}
+            userCoordinates={displayCoordinates}
             selectedService={selectedService || undefined}
             onMarkerClick={handleServiceSelect}
             onBookNow={handleBookNow}
@@ -100,7 +106,7 @@ const ServiceListingPage = () => {
             selectedCategory={selectedCategory}
             selectedDistance={selectedDistance}
             searchQuery={searchQuery}
-            userCoordinates={coordinates as Coordinates}
+            userCoordinates={displayCoordinates}
             onCategoryChange={setSelectedCategory}
             onDistanceChange={setSelectedDistance}
             onSearchChange={setSearchQuery}
@@ -114,7 +120,7 @@ const ServiceListingPage = () => {
           <div className="md:hidden absolute inset-0 z-[500] bg-white">
             <ServiceMap
               services={filteredServices}
-              userCoordinates={coordinates as Coordinates}
+              userCoordinates={displayCoordinates}
               selectedService={selectedService || undefined}
               onMarkerClick={handleServiceSelect}
               onBookNow={handleBookNow}
@@ -137,7 +143,7 @@ const ServiceListingPage = () => {
               selectedCategory={selectedCategory}
               selectedDistance={selectedDistance}
               searchQuery={searchQuery}
-              userCoordinates={coordinates as Coordinates}
+              userCoordinates={displayCoordinates}
               onCategoryChange={setSelectedCategory}
               onDistanceChange={setSelectedDistance}
               onSearchChange={setSearchQuery}

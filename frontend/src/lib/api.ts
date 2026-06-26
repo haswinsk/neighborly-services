@@ -1,7 +1,10 @@
 export const API_BASE_URL = (() => {
-  // In production (Vercel), VITE_API_URL must be set to the deployed backend URL.
-  // In development it falls back to localhost:5000.
-  const raw = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api";
+  // In development: use relative /api path (proxied via Vite to localhost:5000)
+  // In production: VITE_API_URL env var points to deployed backend, or default to relative /api
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+  const raw = (import.meta.env.VITE_API_URL as string | undefined) || "/api";
   const url = raw.replace(/\/$/, "");
   return url.endsWith("/api") ? url : url + "/api";
 })();
