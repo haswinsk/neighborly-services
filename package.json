@@ -7,6 +7,7 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "npm --prefix frontend run preview",
     "lint": "npm --prefix frontend run lint",
     "test": "npm --prefix frontend run test",
     "seed": "npm --prefix backend run seed",
