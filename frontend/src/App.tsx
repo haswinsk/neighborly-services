@@ -20,8 +20,10 @@ import ProviderBookingsPage from "./pages/ProviderBookingsPage";
 import ProviderEarningsPage from "./pages/ProviderEarningsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminProvidersPage from "./pages/AdminProvidersPage";
 import AdminBookingsPage from "./pages/AdminBookingsPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import ServerError from "./pages/ServerError";
@@ -171,6 +173,16 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/providers"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["admin"]}>
+                    <AdminProvidersPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/bookings"
               element={
                 <ProtectedRoute>
@@ -186,6 +198,16 @@ const App = () => (
                 <ProtectedRoute>
                   <RoleRoute allowedRoles={["admin"]}>
                     <AdminCategoriesPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["admin"]}>
+                    <AdminReportsPage />
                   </RoleRoute>
                 </ProtectedRoute>
               }
