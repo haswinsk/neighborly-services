@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wrench, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { Wrench, Eye, EyeOff, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -227,6 +227,16 @@ const RegisterPage = () => {
                   </SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Provider Location Tip */}
+              {role === "provider" && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-700">
+                    You'll be able to add your service location after registration from your dashboard to appear in customer searches.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Phone Field */}

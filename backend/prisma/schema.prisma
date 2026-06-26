@@ -18,6 +18,12 @@ model User {
   role      String   @default("customer")
   phone     String   @default("")
   location  String   @default("")
+  address   String   @default("")
+  city      String   @default("")
+  state     String   @default("")
+  country   String   @default("India")
+  latitude  Float?
+  longitude Float?
   avatar    String   @default("")
   approved  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -38,6 +44,9 @@ model Service {
   providerId       String
   providerName     String
   providerLocation String
+  address          String   @default("")
+  city             String   @default("")
+  state            String   @default("")
   category         String
   rating           Float    @default(0)
   reviewCount      Int      @default(0)
