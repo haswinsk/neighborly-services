@@ -38,7 +38,7 @@ const ProviderBookingsPage = () => {
 
   const handleSeeLocation = (booking: Booking) => {
     if (booking.customerLatitude && booking.customerLongitude) {
-      // Store location data in sessionStorage to pass to map view
+      // Store customer location in sessionStorage to show nearby services on the map
       sessionStorage.setItem(
         "focusLocation",
         JSON.stringify({
@@ -46,6 +46,8 @@ const ProviderBookingsPage = () => {
           longitude: booking.customerLongitude,
           customerName: booking.customerName,
           bookingId: booking.id,
+          showNearbyServices: true,
+          searchRadius: 5, // Show services within 5km
         })
       );
       navigate("/services");

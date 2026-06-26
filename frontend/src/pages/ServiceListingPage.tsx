@@ -28,7 +28,8 @@ const ServiceListingPage = () => {
   const navigate = useNavigate();
 
   // Always show the map immediately using default location; upgrade to GPS when ready
-  const displayCoordinates = coordinates ?? DEFAULT_LOCATION;
+  // If focusLocation is set (from booking card), use that instead
+  const displayCoordinates = focusLocation || coordinates || DEFAULT_LOCATION;
 
   useEffect(() => {
     apiRequest<{ services: Service[] }>("/services")
@@ -39,13 +40,16 @@ const ServiceListingPage = () => {
   // Filter services client-side based on category, distance, and search
   const filteredServices = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
+    // Use focusLocation (customer location) if set, otherwise use user's location
+    const referenceCoords = focusLocation || coordinates;
+
     return services.filter((service) => {
       if (selectedCategory && service.category !== selectedCategory) return false;
 
-      // Apply distance filter only if user has coordinates
-      if (selectedDistance && coordinates) {
+      // Apply distance filter based on reference location (focus or user coords)
+      if (selectedDistance && referenceCoords) {
         if (!service.latitude || !service.longitude) return false;
-        const dist = calculateDistance(coordinates as Coordinates, {
+        const dist = calculateDistance(referenceCoords as Coordinates, {
           latitude: service.latitude,
           longitude: service.longitude,
         });
@@ -60,7 +64,7 @@ const ServiceListingPage = () => {
 
       return true;
     });
-  }, [services, selectedCategory, selectedDistance, searchQuery, coordinates]);
+  }, [services, selectedCategory, selectedDistance, searchQuery, coordinates, focusLocation]);
 
   const handleServiceSelect = useCallback((serviceId: string) => {
     setSelectedService(serviceId);
@@ -71,12 +75,19 @@ const ServiceListingPage = () => {
   }, [navigate]);
 
   // Handle focus location from booking card (when provider clicks "See Location")
+  // This will show nearby services around the customer location
   useEffect(() => {
     const focusData = sessionStorage.getItem("focusLocation");
     if (focusData) {
       try {
-        const { latitude, longitude, customerName, bookingId } = JSON.parse(focusData);
+        const { latitude, longitude, customerName, bookingId, showNearbyServices, searchRadius } = JSON.parse(focusData);
         setFocusLocation({ latitude, longitude, customerName });
+        
+        // If showNearbyServices flag is set, also set distance filter to show nearby services
+        if (showNearbyServices && searchRadius) {
+          setSelectedDistance(`${searchRadius}km`);
+        }
+        
         sessionStorage.removeItem("focusLocation");
       } catch (err) {
         console.error("Failed to parse focus location:", err);
