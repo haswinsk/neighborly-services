@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { SERVICE_CATEGORIES } from "@/types";
-import { Search, Wrench, MapPin } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
+import { Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StarRating } from "@/components/StarRating";
 import { useAuth } from "@/contexts/AuthContext";
-import { getServiceImage } from "@/data/serviceImages";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
+import { useGeolocation, Coordinates } from "@/lib/geolocation";
+import { ServiceMap } from "@/components/ServiceMap";
+import { MapFilters } from "@/components/MapFilters";
 
 const ServiceListingPage = () => {
-  const [searchParams] = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "");
   const [services, setServices] = useState<Service[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
+  const { coordinates, loading } = useGeolocation();
 
   useEffect(() => {
     const loadServices = async () => {
@@ -30,15 +31,43 @@ const ServiceListingPage = () => {
     loadServices();
   }, []);
 
-  const filtered = services.filter((s) => {
-    const matchQ = !query || s.serviceName.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase());
-    const matchCat = !category || s.category === category;
-    return matchQ && matchCat;
-  });
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId);
+  };
+
+  const handleBookNow = (serviceId: string) => {
+    // Navigate to service details page
+    window.location.href = `/services/${serviceId}`;
+  };
+
+  if (loading || !coordinates) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b bg-card">
+          <div className="container flex items-center justify-between py-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <Wrench className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-foreground">LocalServ</span>
+            </Link>
+            {isAuthenticated ? (
+              <Link to="/customer"><Button variant="ghost" size="sm">Dashboard</Button></Link>
+            ) : (
+              <Link to="/login"><Button size="sm">Sign In</Button></Link>
+            )}
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b bg-card z-50">
         <div className="container flex items-center justify-between py-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -54,53 +83,67 @@ const ServiceListingPage = () => {
         </div>
       </header>
 
-      <div className="container py-8">
-        <h1 className="text-2xl font-bold text-foreground">Browse Services</h1>
-
-        {/* Filters */}
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search services..." className="pl-10" value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant={category === "" ? "default" : "outline"} size="sm" onClick={() => setCategory("")}>All</Button>
-            {SERVICE_CATEGORIES.map((cat) => (
-              <Button key={cat} variant={category === cat ? "default" : "outline"} size="sm" onClick={() => setCategory(cat)}>
-                {cat}
-              </Button>
-            ))}
-          </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Map Container - Hidden on mobile */}
+        <div className="hidden md:flex flex-1 relative">
+          <ServiceMap
+            services={services}
+            userCoordinates={coordinates as Coordinates}
+            selectedService={selectedService || undefined}
+            onMarkerClick={handleServiceSelect}
+          />
         </div>
 
-        {/* Results */}
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((service) => (
-            <Link key={service.id} to={`/services/${service.id}`} className="service-card overflow-hidden">
-              <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-28 w-full object-cover" />
-              <div className="p-5">
-                <span className="text-xs font-medium text-primary">{service.category}</span>
-                <h3 className="mt-1 font-semibold text-foreground">{service.serviceName}</h3>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{service.description}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <StarRating rating={service.rating} size={14} />
-                  <span className="text-lg font-bold text-foreground">₹{service.price}</span>
-                </div>
-                <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>{service.providerLocation}</span>
-                  <span className="ml-1">· by {service.providerName} · {service.reviewCount} reviews</span>
-                </div>
-              </div>
-            </Link>
-          ))}
+        {/* Filters and Service List */}
+        <div className="w-full md:w-96 border-l bg-white flex flex-col">
+          <MapFilters
+            services={services}
+            selectedCategory={selectedCategory}
+            selectedDistance={selectedDistance}
+            searchQuery={searchQuery}
+            userCoordinates={coordinates as Coordinates}
+            onCategoryChange={setSelectedCategory}
+            onDistanceChange={setSelectedDistance}
+            onSearchChange={setSearchQuery}
+            onServiceSelect={handleServiceSelect}
+            selectedService={selectedService || undefined}
+          />
         </div>
+      </div>
 
-        {filtered.length === 0 && (
-          <div className="mt-12 text-center text-muted-foreground">
-            <p>No services found. Try adjusting your search.</p>
-          </div>
-        )}
+      {/* Mobile Map Button */}
+      <div className="md:hidden fixed bottom-6 right-6 z-40">
+        <Button
+          onClick={() => {
+            const mapElement = document.querySelector("[data-map-mobile]");
+            if (mapElement) {
+              mapElement.classList.toggle("hidden");
+            }
+          }}
+          className="rounded-full h-14 w-14 shadow-lg"
+        >
+          🗺️
+        </Button>
+      </div>
+
+      {/* Mobile Map Modal */}
+      <div
+        data-map-mobile
+        className="hidden md:hidden fixed inset-0 z-30 bg-black/50"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            e.currentTarget.classList.add("hidden");
+          }
+        }}
+      >
+        <div className="bg-white h-full w-full">
+          <ServiceMap
+            services={services}
+            userCoordinates={coordinates as Coordinates}
+            selectedService={selectedService || undefined}
+            onMarkerClick={handleServiceSelect}
+          />
+        </div>
       </div>
     </div>
   );
