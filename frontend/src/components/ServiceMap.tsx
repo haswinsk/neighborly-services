@@ -46,12 +46,13 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
     
     setIsLocating(true);
     try {
-      // Get fresh GPS location
       if (navigator.geolocation) {
+        // Try high accuracy first
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const newLat = position.coords.latitude;
             const newLng = position.coords.longitude;
+            console.log('[v0] Locate me found GPS:', newLat, newLng);
             
             map.setView([newLat, newLng], 13, {
               animate: true,
@@ -60,15 +61,35 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
             
             setIsLocating(false);
           },
-          () => {
-            // Fallback to stored coordinates
-            map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
-              animate: true,
-              duration: 0.5,
-            });
-            setIsLocating(false);
+          (error) => {
+            console.log('[v0] Locate me GPS error:', error.code);
+            // Fallback to lower accuracy
+            navigator.geolocation.getCurrentPosition(
+              (fallbackPosition) => {
+                const newLat = fallbackPosition.coords.latitude;
+                const newLng = fallbackPosition.coords.longitude;
+                console.log('[v0] Locate me fallback GPS:', newLat, newLng);
+                
+                map.setView([newLat, newLng], 13, {
+                  animate: true,
+                  duration: 0.5,
+                });
+                
+                setIsLocating(false);
+              },
+              () => {
+                console.log('[v0] All locate me attempts failed');
+                // Use stored coordinates
+                map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
+                  animate: true,
+                  duration: 0.5,
+                });
+                setIsLocating(false);
+              },
+              { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+            );
           },
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
       } else {
         map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
@@ -78,6 +99,7 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
         setIsLocating(false);
       }
     } catch (error) {
+      console.log('[v0] Locate me error:', error);
       setIsLocating(false);
     }
   };
@@ -172,12 +194,16 @@ export function ServiceMap({
       <MapContainer
         center={centerCoords}
         zoom={13}
+        minZoom={2}
+        maxZoom={18}
         className="h-full w-full"
         style={{ zIndex: 0 }}
+        worldCopyJump={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          noWrap={true}
         />
 
         {/* User Location Marker - uniquely keyed to prevent duplication */}

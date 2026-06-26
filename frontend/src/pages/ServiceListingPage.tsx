@@ -45,12 +45,12 @@ const ServiceListingPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col">
       <Header />
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Map Container - Hidden on mobile */}
-        <div className="hidden md:flex flex-1 relative">
+        {/* Map Container - Fixed, no scrolling */}
+        <div className="hidden md:flex flex-1 relative h-full">
           <ServiceMap
             services={services}
             userCoordinates={coordinates as Coordinates}
@@ -59,20 +59,22 @@ const ServiceListingPage = () => {
           />
         </div>
 
-        {/* Filters and Service List */}
-        <div className="w-full md:w-96 border-l bg-white flex flex-col">
-          <MapFilters
-            services={services}
-            selectedCategory={selectedCategory}
-            selectedDistance={selectedDistance}
-            searchQuery={searchQuery}
-            userCoordinates={coordinates as Coordinates}
-            onCategoryChange={setSelectedCategory}
-            onDistanceChange={setSelectedDistance}
-            onSearchChange={setSearchQuery}
-            onServiceSelect={handleServiceSelect}
-            selectedService={selectedService || undefined}
-          />
+        {/* Filters and Service List - Only this scrolls */}
+        <div className="w-full md:w-96 border-l bg-white flex flex-col h-full overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <MapFilters
+              services={services}
+              selectedCategory={selectedCategory}
+              selectedDistance={selectedDistance}
+              searchQuery={searchQuery}
+              userCoordinates={coordinates as Coordinates}
+              onCategoryChange={setSelectedCategory}
+              onDistanceChange={setSelectedDistance}
+              onSearchChange={setSearchQuery}
+              onServiceSelect={handleServiceSelect}
+              selectedService={selectedService || undefined}
+            />
+          </div>
         </div>
       </div>
 

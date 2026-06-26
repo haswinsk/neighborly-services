@@ -27,6 +27,7 @@ export const useGeolocation = (): GeolocationState => {
 
   useEffect(() => {
     if (!navigator.geolocation) {
+      console.log('[v0] Geolocation not supported');
       setState({
         coordinates: DEFAULT_COORDINATES,
         loading: false,
@@ -40,6 +41,7 @@ export const useGeolocation = (): GeolocationState => {
 
     const handleTimeout = () => {
       if (!isAborted) {
+        console.log('[v0] Geolocation timeout - using default');
         setState({
           coordinates: DEFAULT_COORDINATES,
           loading: false,
@@ -49,17 +51,18 @@ export const useGeolocation = (): GeolocationState => {
       }
     };
 
-    // Single timeout: 10 seconds for high accuracy GPS
-    timeoutId = setTimeout(handleTimeout, 10000);
-
+    // Try high accuracy first, then fallback to lower accuracy
     navigator.geolocation.getCurrentPosition(
       (position) => {
         clearTimeout(timeoutId);
         if (!isAborted) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          console.log('[v0] GPS location found:', lat, lng);
           setState({
             coordinates: {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
+              latitude: lat,
+              longitude: lng,
             },
             loading: false,
             error: null,
@@ -70,21 +73,53 @@ export const useGeolocation = (): GeolocationState => {
       (error) => {
         clearTimeout(timeoutId);
         if (!isAborted) {
-          // Immediately use default on any error
-          setState({
-            coordinates: DEFAULT_COORDINATES,
-            loading: false,
-            error: `Location unavailable: ${error.message}`,
-          });
-          isAborted = true;
+          console.log('[v0] GPS error:', error.code, error.message);
+          // Try again with lower accuracy
+          navigator.geolocation.getCurrentPosition(
+            (fallbackPosition) => {
+              if (!isAborted) {
+                const lat = fallbackPosition.coords.latitude;
+                const lng = fallbackPosition.coords.longitude;
+                console.log('[v0] Fallback GPS location found:', lat, lng);
+                setState({
+                  coordinates: {
+                    latitude: lat,
+                    longitude: lng,
+                  },
+                  loading: false,
+                  error: null,
+                });
+                isAborted = true;
+              }
+            },
+            () => {
+              if (!isAborted) {
+                console.log('[v0] Fallback GPS also failed - using default');
+                setState({
+                  coordinates: DEFAULT_COORDINATES,
+                  loading: false,
+                  error: 'Location unavailable',
+                });
+                isAborted = true;
+              }
+            },
+            {
+              enableHighAccuracy: false,
+              timeout: 8000,
+              maximumAge: 600000,
+            }
+          );
         }
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
+        timeout: 5000,
+        maximumAge: 0,
       }
     );
+
+    // Set fallback timeout
+    timeoutId = setTimeout(handleTimeout, 8000);
 
     return () => {
       clearTimeout(timeoutId);
