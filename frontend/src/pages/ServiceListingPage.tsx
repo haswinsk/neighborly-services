@@ -147,14 +147,18 @@ const ServiceListingPage = () => {
         </div>
       </div>
 
-      {/* ── MOBILE FAB: Toggle Map ── */}
-      <div className="md:hidden fixed bottom-6 right-6 z-[450]">
+      {/* MOBILE: Bottom FAB with toggle label */}
+      <div className="md:hidden fixed bottom-6 right-6 z-[450] flex flex-col items-end gap-2">
+        <div className="bg-black/60 text-white px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">
+          {showMobileMap ? "Tap for List" : "Tap for Map"}
+        </div>
         <Button
           onClick={() => setShowMobileMap((v) => !v)}
-          className="rounded-full h-14 w-14 shadow-xl"
-          aria-label="Toggle map"
+          size="lg"
+          className="rounded-full h-16 w-16 shadow-2xl hover:scale-110 transition-transform"
+          aria-label={showMobileMap ? "Show provider list" : "Show map"}
         >
-          <MapIcon className="w-5 h-5" />
+          <MapIcon className="w-6 h-6" />
         </Button>
       </div>
     </div>
