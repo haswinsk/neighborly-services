@@ -21,6 +21,7 @@ import AdminBookingsPage from "./pages/AdminBookingsPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import { MapPage } from "./pages/MapPage";
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/services" element={<ServiceListingPage />} />
             <Route path="/services/:id" element={<ServiceDetailsPage />} />
             <Route

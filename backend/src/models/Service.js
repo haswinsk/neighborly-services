@@ -9,10 +9,13 @@ const serviceSchema = new mongoose.Schema(
     providerId: { type: String, required: true, index: true },
     providerName: { type: String, required: true },
     providerLocation: { type: String, required: true },
+    providerLatitude: { type: Number, default: null },
+    providerLongitude: { type: Number, default: null },
     category: { type: String, required: true },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0, min: 0 },
     image: { type: String, default: "" },
+    availability: { type: String, enum: ["Available", "Busy", "Offline"], default: "Available" },
   },
   { timestamps: true }
 );

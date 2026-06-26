@@ -50,6 +50,14 @@ const HomePage = () => {
             <span className="text-lg font-bold text-foreground">LocalServ</span>
           </Link>
           <div className="flex items-center gap-2">
+            {isAuthenticated && user?.role === "customer" && (
+              <Link to="/map">
+                <Button variant="ghost" size="sm" className="rounded-lg gap-1">
+                  <MapPin className="h-4 w-4" />
+                  Map
+                </Button>
+              </Link>
+            )}
             {isAuthenticated ? (
               <Link to={user?.role === "admin" ? "/admin" : user?.role === "provider" ? "/provider" : "/customer"}>
                 <Button className="rounded-lg" size="sm">Dashboard</Button>

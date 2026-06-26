@@ -11,6 +11,7 @@ import reviewsRoutes from "./routes/reviews.routes.js";
 import bookingsRoutes from "./routes/bookings.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import providersRoutes from "./routes/providers.routes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -88,6 +89,7 @@ app.use("/api/reviews", reviewsRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/providers", providersRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

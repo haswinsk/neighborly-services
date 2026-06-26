@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["customer", "provider", "admin"], default: "customer" },
     phone: { type: String, default: "" },
     location: { type: String, default: "" },
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null },
     avatar: { type: String, default: "" },
     approved: { type: Boolean, default: true },
   },
