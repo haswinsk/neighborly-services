@@ -18,42 +18,41 @@ const CustomerDashboard = () => {
   const [loadingLocation, setLoadingLocation] = useState(true);
 
   useEffect(() => {
-    const checkLocation = async () => {
-      try {
-        // Use geolocation to detect if customer has set a location
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              // Auto-save customer location
-              apiRequest(`/users/${user?.id}/location`, {
-                method: "PUT",
-                body: JSON.stringify({ latitude, longitude }),
-              }).then(() => {
-                setLocationSet(true);
-              }).catch(() => {
-                setLocationSet(false);
-              }).finally(() => {
-                setLoadingLocation(false);
-              });
-            },
-            () => {
-              // No geolocation permission
-              setLocationSet(false);
-              setLoadingLocation(false);
-            },
-            { enableHighAccuracy: true, timeout: 5000 }
-          );
-        } else {
-          setLoadingLocation(false);
-        }
-      } catch {
-        setLoadingLocation(false);
-      }
+    // If user already has coordinates saved in profile, no need to prompt
+    if (user?.latitude && user?.longitude) {
+      setLocationSet(true);
+      setLoadingLocation(false);
+      return;
+    }
+
+    if (!user?.id) {
+      setLoadingLocation(false);
+      return;
+    }
+
+    const saveLocation = (latitude: number, longitude: number) => {
+      apiRequest(`/users/${user.id}/location`, {
+        method: "PUT",
+        body: JSON.stringify({ latitude, longitude }),
+      })
+        .then(() => setLocationSet(true))
+        .catch(() => setLocationSet(false))
+        .finally(() => setLoadingLocation(false));
     };
 
-    checkLocation();
-  }, [user?.id]);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => saveLocation(pos.coords.latitude, pos.coords.longitude),
+        () => {
+          setLocationSet(false);
+          setLoadingLocation(false);
+        },
+        { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
+      );
+    } else {
+      setLoadingLocation(false);
+    }
+  }, [user?.id, user?.latitude, user?.longitude]);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -88,26 +87,34 @@ const CustomerDashboard = () => {
               size="sm" 
               className="mt-2"
               onClick={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      const { latitude, longitude } = position.coords;
-                      apiRequest(`/users/${user?.id}/location`, {
-                        method: "PUT",
-                        body: JSON.stringify({ latitude, longitude }),
-                      }).then(() => {
+                if (!user?.id) return;
+                if (!navigator.geolocation) {
+                  toast({ title: "Geolocation not supported by your browser", variant: "destructive" });
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                  ({ coords }) => {
+                    apiRequest(`/users/${user.id}/location`, {
+                      method: "PUT",
+                      body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
+                    })
+                      .then(() => {
                         setLocationSet(true);
-                        toast({ title: "Location saved successfully" });
-                      }).catch(() => {
+                        toast({ title: "Location saved", description: "Providers can now see your location." });
+                      })
+                      .catch(() => {
                         toast({ title: "Failed to save location", variant: "destructive" });
                       });
-                    },
-                    () => {
-                      toast({ title: "Location permission denied", description: "Please enable location in your browser settings", variant: "destructive" });
-                    },
-                    { enableHighAccuracy: true, timeout: 5000 }
-                  );
-                }
+                  },
+                  () => {
+                    toast({
+                      title: "Location permission denied",
+                      description: "Enable location in your browser settings and try again.",
+                      variant: "destructive",
+                    });
+                  },
+                  { enableHighAccuracy: false, timeout: 8000 }
+                );
               }}
             >
               <MapPin className="w-4 h-4 mr-1" /> Enable Location

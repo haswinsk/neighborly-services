@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Wrench, ChevronUp, ChevronDown, Map as MapIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
 import { useGeolocation, Coordinates } from "@/lib/geolocation";
@@ -11,7 +10,7 @@ import { MapFilters } from "@/components/MapFilters";
 import { calculateDistance } from "@/lib/distance";
 import { Header } from "@/components/Header";
 
-// Default to Coimbatore for testing/fallback
+// Default to Coimbatore — shown immediately so the map is never blank
 const DEFAULT_LOCATION: Coordinates = {
   latitude: 11.0126,
   longitude: 76.9558,
@@ -23,15 +22,12 @@ const ServiceListingPage = () => {
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
-  const [useDefaultLocation, setUseDefaultLocation] = useState(false);
-  const { isAuthenticated } = useAuth();
   const { coordinates, loading } = useGeolocation();
   const navigate = useNavigate();
 
-  // Use GPS coordinates if available, fallback to Coimbatore if user opts in
-  const displayCoordinates = coordinates || (useDefaultLocation ? DEFAULT_LOCATION : null);
+  // Always show the map immediately using default location; upgrade to GPS when ready
+  const displayCoordinates = coordinates ?? DEFAULT_LOCATION;
 
   useEffect(() => {
     apiRequest<{ services: Service[] }>("/services")
@@ -79,121 +75,73 @@ const ServiceListingPage = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      {/* Show location detection indicator while loading */}
+      {/* Location detection strip — only shown while GPS is loading */}
       {loading && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-sm text-blue-700">
-          <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span>Detecting your location...</span>
+        <div className="bg-blue-50 border-b border-blue-100 px-4 py-1.5 flex items-center gap-2 text-xs text-blue-600 shrink-0">
+          <div className="w-2.5 h-2.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          Detecting your GPS location&hellip;
         </div>
       )}
 
       {/* Main content: Sidebar (left) + Map (right) */}
       <div className="flex-1 flex overflow-hidden relative">
 
-        {/* ── DESKTOP SIDEBAR (LEFT) ── */}
+        {/* DESKTOP SIDEBAR (LEFT) */}
         <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white h-full overflow-hidden shadow-lg">
-          {displayCoordinates ? (
-            <MapFilters
-              services={filteredServices}
-              allServices={services}
-              selectedCategory={selectedCategory}
-              selectedDistance={selectedDistance}
-              searchQuery={searchQuery}
-              userCoordinates={displayCoordinates}
-              onCategoryChange={setSelectedCategory}
-              onDistanceChange={setSelectedDistance}
-              onSearchChange={setSearchQuery}
-              onServiceSelect={handleServiceSelect}
-              selectedService={selectedService || undefined}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
-              {loading ? (
-                <>
-                  <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground text-center">Detecting your location...</p>
-                  <p className="text-xs text-gray-500 text-center">Please enable location access</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground text-center">Unable to detect your location</p>
-                  <Button
-                    onClick={() => setUseDefaultLocation(true)}
-                    className="w-full"
-                  >
-                    Use Coimbatore
-                  </Button>
-                  <p className="text-xs text-gray-500 text-center">Or enable location permission and refresh</p>
-                </>
-              )}
-            </div>
-          )}
+          <MapFilters
+            services={filteredServices}
+            allServices={services}
+            selectedCategory={selectedCategory}
+            selectedDistance={selectedDistance}
+            searchQuery={searchQuery}
+            userCoordinates={displayCoordinates}
+            onCategoryChange={setSelectedCategory}
+            onDistanceChange={setSelectedDistance}
+            onSearchChange={setSearchQuery}
+            onServiceSelect={handleServiceSelect}
+            selectedService={selectedService || undefined}
+          />
         </aside>
 
-        {/* ── DESKTOP MAP (RIGHT, FULL) ── */}
-        {displayCoordinates && (
-          <div className="hidden md:flex flex-1 relative">
-            <ServiceMap
-              services={filteredServices}
-              userCoordinates={displayCoordinates}
-              selectedService={selectedService || undefined}
-              onMarkerClick={handleServiceSelect}
-              onBookNow={handleBookNow}
-            />
-          </div>
-        )}
+        {/* DESKTOP MAP (RIGHT, FULL) */}
+        <div className="hidden md:flex flex-1 relative">
+          <ServiceMap
+            services={filteredServices}
+            userCoordinates={displayCoordinates}
+            selectedService={selectedService || undefined}
+            onMarkerClick={handleServiceSelect}
+            onBookNow={handleBookNow}
+          />
+        </div>
 
-        {/* ── MOBILE: Single view (either map or list) ── */}
+        {/* MOBILE: Single view (either map or list) */}
         <div className="md:hidden flex-1 flex flex-col w-full overflow-hidden">
-          {displayCoordinates ? (
-            <>
-              {showMobileMap ? (
-                <div className="flex-1 relative">
-                  <ServiceMap
-                    services={filteredServices}
-                    userCoordinates={displayCoordinates}
-                    selectedService={selectedService || undefined}
-                    onMarkerClick={handleServiceSelect}
-                    onBookNow={handleBookNow}
-                  />
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto">
-                  <MapFilters
-                    services={filteredServices}
-                    allServices={services}
-                    selectedCategory={selectedCategory}
-                    selectedDistance={selectedDistance}
-                    searchQuery={searchQuery}
-                    userCoordinates={displayCoordinates}
-                    onCategoryChange={setSelectedCategory}
-                    onDistanceChange={setSelectedDistance}
-                    onSearchChange={setSearchQuery}
-                    onServiceSelect={handleServiceSelect}
-                    selectedService={selectedService || undefined}
-                    compact
-                  />
-                </div>
-              )}
-            </>
+          {showMobileMap ? (
+            <div className="flex-1 relative">
+              <ServiceMap
+                services={filteredServices}
+                userCoordinates={displayCoordinates}
+                selectedService={selectedService || undefined}
+                onMarkerClick={handleServiceSelect}
+                onBookNow={handleBookNow}
+              />
+            </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
-              {loading ? (
-                <>
-                  <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground">Detecting location...</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground text-center">Unable to detect your location</p>
-                  <Button
-                    onClick={() => setUseDefaultLocation(true)}
-                    className="w-full"
-                  >
-                    Use Coimbatore
-                  </Button>
-                </>
-              )}
+            <div className="flex-1 overflow-y-auto">
+              <MapFilters
+                services={filteredServices}
+                allServices={services}
+                selectedCategory={selectedCategory}
+                selectedDistance={selectedDistance}
+                searchQuery={searchQuery}
+                userCoordinates={displayCoordinates}
+                onCategoryChange={setSelectedCategory}
+                onDistanceChange={setSelectedDistance}
+                onSearchChange={setSearchQuery}
+                onServiceSelect={handleServiceSelect}
+                selectedService={selectedService || undefined}
+                compact
+              />
             </div>
           )}
         </div>

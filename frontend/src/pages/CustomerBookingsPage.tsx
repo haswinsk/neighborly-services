@@ -6,18 +6,52 @@ import { apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { MiniMap, LocationBadge } from "@/components/MiniMap";
-import { MapPin, Phone, Mail, Calendar, IndianRupee } from "lucide-react";
+import { MapPin, Phone, Mail, Calendar, IndianRupee, Inbox, RefreshCw, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
+
+function BookingSkeleton() {
+  return (
+    <div className="rounded-xl border bg-card p-5 shadow-sm animate-pulse">
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="space-y-2">
+          <div className="h-4 w-44 bg-muted rounded" />
+          <div className="h-3 w-28 bg-muted rounded" />
+        </div>
+        <div className="h-6 w-20 bg-muted rounded-full" />
+      </div>
+      <div className="flex gap-4 mb-3">
+        <div className="h-3 w-24 bg-muted rounded" />
+        <div className="h-3 w-16 bg-muted rounded" />
+      </div>
+      <div className="h-3 w-28 bg-muted rounded mb-2" />
+      <div className="h-[150px] w-full bg-muted rounded-lg" />
+    </div>
+  );
+}
+
+function StatusIcon({ status }: { status: Booking["status"] }) {
+  if (status === "Completed") return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+  if (status === "Rejected") return <XCircle className="w-4 h-4 text-red-500" />;
+  return <Clock className="w-4 h-4 text-amber-500" />;
+}
 
 const CustomerBookingsPage = () => {
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadBookings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await apiRequest<{ bookings: Booking[] }>("/bookings");
       setMyBookings(response.bookings);
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load bookings";
+      setError(message);
       setMyBookings([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -33,8 +67,8 @@ const CustomerBookingsPage = () => {
       });
       setMyBookings((prev) => prev.map((b) => (b.id === bookingId ? response.booking : b)));
       toast({ title: "Work marked as completed" });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not update booking";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not update booking";
       toast({ title: "Update failed", description: message, variant: "destructive" });
     }
   };
@@ -47,41 +81,104 @@ const CustomerBookingsPage = () => {
       });
       setMyBookings((prev) => prev.map((b) => (b.id === bookingId ? response.booking : b)));
       toast({ title: "Payment completed. Contact details unlocked." });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not complete payment";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not complete payment";
       toast({ title: "Payment failed", description: message, variant: "destructive" });
     }
   };
 
+  const active = myBookings.filter((b) => b.status !== "Completed" && b.status !== "Rejected").length;
+  const completed = myBookings.filter((b) => b.status === "Completed").length;
+
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold text-foreground">My Bookings</h1>
-      <p className="mt-1 text-muted-foreground">Track your service bookings and provider locations</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Bookings</h1>
+          <p className="mt-1 text-muted-foreground">Track your service bookings and provider locations</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={loadBookings} disabled={loading} className="gap-2 shrink-0">
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Stats strip */}
+      {!loading && !error && myBookings.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="rounded-lg border bg-card p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{myBookings.length}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Total</p>
+          </div>
+          <div className="rounded-lg border bg-blue-50 border-blue-200 p-3 text-center">
+            <p className="text-2xl font-bold text-blue-700">{active}</p>
+            <p className="text-xs text-blue-600 mt-0.5">Active</p>
+          </div>
+          <div className="rounded-lg border bg-green-50 border-green-200 p-3 text-center">
+            <p className="text-2xl font-bold text-green-700">{completed}</p>
+            <p className="text-xs text-green-600 mt-0.5">Completed</p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 space-y-4">
-        {myBookings.length === 0 && (
-          <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground text-sm">
-            No bookings yet.
+        {/* Loading state */}
+        {loading && (
+          <>
+            <BookingSkeleton />
+            <BookingSkeleton />
+            <BookingSkeleton />
+          </>
+        )}
+
+        {/* Error state */}
+        {!loading && error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-red-800">Failed to load bookings</p>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+              <Button size="sm" variant="outline" className="mt-3" onClick={loadBookings}>
+                Try Again
+              </Button>
+            </div>
           </div>
         )}
 
-        {myBookings.map((b) => {
+        {/* Empty state */}
+        {!loading && !error && myBookings.length === 0 && (
+          <div className="rounded-xl border bg-card p-12 flex flex-col items-center gap-3 text-center">
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+              <Inbox className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <p className="font-semibold text-foreground">No bookings yet</p>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              Browse services and book a provider to get started.
+            </p>
+          </div>
+        )}
+
+        {/* Booking cards */}
+        {!loading && !error && myBookings.map((b) => {
           const hasProviderCoords = !!(b.providerLatitude && b.providerLongitude);
 
           return (
-            <div key={b.id} className="rounded-xl border bg-card p-5 shadow-sm">
+            <div key={b.id} className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                {/* ── Booking Info ── */}
-                <div className="flex-1 space-y-3">
+                {/* Booking Info */}
+                <div className="flex-1 space-y-3 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-foreground text-base">{b.serviceName}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground text-base truncate">{b.serviceName}</p>
                       <p className="text-sm text-muted-foreground">by {b.providerName}</p>
                     </div>
-                    <StatusBadge status={b.status} />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusIcon status={b.status} />
+                      <StatusBadge status={b.status} />
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
                       {b.bookingDate}
@@ -92,7 +189,7 @@ const CustomerBookingsPage = () => {
                     </span>
                   </div>
 
-                  {/* ── Provider Location ── */}
+                  {/* Provider Location */}
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-blue-500" />
@@ -100,43 +197,43 @@ const CustomerBookingsPage = () => {
                     </p>
                     {hasProviderCoords ? (
                       <MiniMap
-                        height={150}
+                        height={160}
                         pins={[
                           {
                             latitude: b.providerLatitude!,
                             longitude: b.providerLongitude!,
-                            label: `${b.providerName}${b.providerLocation ? ` · ${b.providerLocation}` : ''}`,
-                            type: 'user',
+                            label: `${b.providerName}${b.providerLocation ? ` · ${b.providerLocation}` : ""}`,
+                            type: "user",
                           },
                         ]}
                       />
                     ) : (
-                      <LocationBadge label={b.providerLocation || 'Provider location not set'} />
+                      <LocationBadge label={b.providerLocation || "Provider location not set"} />
                     )}
                   </div>
 
-                  {/* ── Contact details (unlocked after payment) ── */}
+                  {/* Contact details — unlocked after payment */}
                   {b.paymentStatus === "Completed" &&
                     (b.providerPhone || b.providerEmail || b.providerLocation) && (
-                      <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-1">
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-1.5">
                         <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
                           Provider Contact Details
                         </p>
                         {b.providerPhone && (
                           <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <Phone className="w-3.5 h-3.5 text-gray-400" />
+                            <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             {b.providerPhone}
                           </p>
                         )}
                         {b.providerEmail && (
                           <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             {b.providerEmail}
                           </p>
                         )}
                         {b.providerLocation && (
                           <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             {b.providerLocation}
                           </p>
                         )}
@@ -144,10 +241,10 @@ const CustomerBookingsPage = () => {
                     )}
                 </div>
 
-                {/* ── Actions ── */}
-                <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end shrink-0">
                   {(b.status === "Accepted" || b.status === "In Progress") && (
-                    <Button size="sm" onClick={() => confirmCompletion(b.id)}>
+                    <Button size="sm" variant="outline" onClick={() => confirmCompletion(b.id)}>
                       Confirm Completed
                     </Button>
                   )}
