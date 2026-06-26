@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx vite",
-    "build": "npx vite build",
-    "build:dev": "npx vite build --mode development",
+    "dev": "vite",
+    "build": "node ./node_modules/.bin/vite build",
+    "build:dev": "node ./node_modules/.bin/vite build --mode development",
     "lint": "eslint .",
-    "preview": "npx vite preview",
+    "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },
