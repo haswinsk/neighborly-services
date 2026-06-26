@@ -27,8 +27,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         const response = await apiRequest<{ user: User }>("/auth/me");
-        setUser(response.user);
-      } catch {
+        if (response?.user) {
+          setUser(response.user);
+        } else {
+          localStorage.removeItem("auth_token");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("[v0] Auth bootstrap failed:", error);
         localStorage.removeItem("auth_token");
         setUser(null);
       } finally {
