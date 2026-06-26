@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
@@ -47,21 +46,7 @@ const ServiceListingPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b bg-card z-50">
-        <div className="container flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Wrench className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold text-foreground">LocalServ</span>
-          </Link>
-          {isAuthenticated ? (
-            <Link to="/customer"><Button variant="ghost" size="sm">Dashboard</Button></Link>
-          ) : (
-            <Link to="/login"><Button size="sm">Sign In</Button></Link>
-          )}
-        </div>
-      </header>
+      <Header />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Map Container - Hidden on mobile */}

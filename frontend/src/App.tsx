@@ -21,6 +21,7 @@ import AdminBookingsPage from "./pages/AdminBookingsPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import ServerError from "./pages/ServerError";
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -181,6 +182,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/500" element={<ServerError />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
