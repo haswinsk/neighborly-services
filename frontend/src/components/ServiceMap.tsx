@@ -125,12 +125,13 @@ function FitBounds({
     });
 
     if (positions.length > 1) {
-      map.fitBounds(L.latLngBounds(positions).pad(0.2), {
+      map.fitBounds(L.latLngBounds(positions).pad(0.15), {
         animate: true,
-        maxZoom: 15,
+        maxZoom: 16,
+        minZoom: 11,
       });
     } else {
-      map.setView([userCoords.latitude, userCoords.longitude], 13, {
+      map.setView([userCoords.latitude, userCoords.longitude], 14, {
         animate: true,
       });
     }
@@ -294,10 +295,12 @@ export function ServiceMap({
     <div className="h-full w-full relative">
       <MapContainer
         center={[userCoordinates.latitude, userCoordinates.longitude]}
-        zoom={13}
+        zoom={14}
         className="h-full w-full"
         style={{ zIndex: 0 }}
         zoomControl={false}
+        minZoom={10}
+        maxZoom={18}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

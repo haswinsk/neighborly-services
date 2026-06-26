@@ -103,8 +103,8 @@ const ServiceListingPage = () => {
           />
         </aside>
 
-        {/* DESKTOP MAP (RIGHT) — Fixed, doesn't scroll with sidebar */}
-        <div className="hidden md:flex flex-1 relative h-full">
+        {/* DESKTOP MAP (RIGHT) — Fixed, fills full remaining space */}
+        <div className="hidden md:flex flex-1 h-full w-full overflow-hidden">
           <ServiceMap
             services={filteredServices}
             userCoordinates={displayCoordinates}
