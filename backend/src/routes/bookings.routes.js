@@ -23,9 +23,12 @@ router.get("/", requireAuth, asyncHandler(async (req, res) => {
 
   if (req.user.role === "customer") {
     const providerIds = [...new Set(bookings.map((booking) => booking.providerId))];
-    const providers = await prisma.user.findMany({ where: { id: { in: providerIds }, role: "provider" }, select: { id: true, phone: true, email: true, location: true } });
+    const providers = await prisma.user.findMany({
+      where: { id: { in: providerIds }, role: "provider" },
+      select: { id: true, phone: true, email: true, location: true, latitude: true, longitude: true, address: true, city: true },
+    });
     const providerContactById = new Map(
-      providers.map((provider) => [provider.id, { phone: provider.phone, email: provider.email, location: provider.location }])
+      providers.map((provider) => [provider.id, provider])
     );
 
     const enrichedBookings = bookings.map((booking) => {
@@ -38,6 +41,31 @@ router.get("/", requireAuth, asyncHandler(async (req, res) => {
         providerPhone: shouldExposeContact ? contact?.phone : undefined,
         providerEmail: shouldExposeContact ? contact?.email : undefined,
         providerLocation: shouldExposeContact ? contact?.location : undefined,
+        // Provider coordinates always visible to customer so they can see provider on map
+        providerLatitude: contact?.latitude ?? undefined,
+        providerLongitude: contact?.longitude ?? undefined,
+      };
+    });
+
+    return res.json({ bookings: enrichedBookings });
+  }
+
+  if (req.user.role === "provider") {
+    // Enrich provider's bookings with customer location so provider can see customer on map
+    const customerIds = [...new Set(bookings.map((booking) => booking.customerId))];
+    const customers = await prisma.user.findMany({
+      where: { id: { in: customerIds } },
+      select: { id: true, latitude: true, longitude: true, address: true, city: true },
+    });
+    const customerLocationById = new Map(customers.map((c) => [c.id, c]));
+
+    const enrichedBookings = bookings.map((booking) => {
+      const loc = customerLocationById.get(booking.customerId);
+      return {
+        ...sanitizeDoc(booking),
+        customerLatitude: loc?.latitude ?? undefined,
+        customerLongitude: loc?.longitude ?? undefined,
+        customerCity: loc?.city ?? undefined,
       };
     });
 

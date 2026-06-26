@@ -51,6 +51,44 @@ export const createCategoryMarker = (category: string, label?: string) => {
 };
 
 /**
+ * Creates a customer location marker (green animated dot) — shown on provider's view
+ */
+export const createCustomerMarker = () => {
+  const html = `
+    <div style="
+      background-color: #22c55e;
+      border: 3px solid white;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(34,197,94,0.7);
+      animation: pulseGreen 2s infinite;
+    ">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </div>
+    <style>
+      @keyframes pulseGreen {
+        0%, 100% { box-shadow: 0 0 10px rgba(34,197,94,0.6); }
+        50% { box-shadow: 0 0 22px rgba(34,197,94,0.9); }
+      }
+    </style>
+  `;
+
+  return L.divIcon({
+    html,
+    className: '',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -17],
+  });
+};
+
+/**
  * Creates a user location marker (blue animated dot)
  */
 export const createUserMarker = () => {

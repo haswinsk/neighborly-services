@@ -43,11 +43,18 @@ export interface Booking {
   id: string;
   customerId: string;
   customerName: string;
+  /** Coordinates of the customer — returned to providers so they can see customer on map */
+  customerLatitude?: number;
+  customerLongitude?: number;
+  customerCity?: string;
   providerId: string;
   providerName: string;
   providerPhone?: string;
   providerEmail?: string;
   providerLocation?: string;
+  /** Provider coordinates — always returned to customers so they can see provider on map */
+  providerLatitude?: number;
+  providerLongitude?: number;
   serviceId: string;
   serviceName: string;
   bookingDate: string;
