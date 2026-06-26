@@ -15,17 +15,6 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
-const configuredOrigins = env.clientUrl
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const isLocalDevOrigin = (origin) => /^http:\/\/localhost:\d+$/.test(origin);
-const isPrivateNetworkDevOrigin = (origin) =>
-  /^http:\/\/(?:127\.0\.0\.1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}):\d+$/.test(
-    origin
-  );
-
 const apiLimiter = rateLimit({
   windowMs: env.rateLimitWindowMs,
   max: env.rateLimitMax,
@@ -54,22 +43,11 @@ app.use(
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-
-      if (
-        configuredOrigins.includes(origin) ||
-        (!env.isProduction && (isLocalDevOrigin(origin) || isPrivateNetworkDevOrigin(origin)))
-      ) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error("Not allowed by CORS"));
-    },
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:8082",
+      "https://neighborly-services.vercel.app"
+    ],
     credentials: true,
   })
 );
