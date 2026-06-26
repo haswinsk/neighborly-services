@@ -1,11 +1,8 @@
 import { useMemo } from 'react';
 import { Coordinates } from '@/lib/geolocation';
-import {
-  sortByDistance,
-  calculateDistance,
-  formatDistance,
-} from '@/lib/distance';
+import { sortByDistance, calculateDistance, formatDistance } from '@/lib/distance';
 import { CATEGORIES } from '@/lib/markerIcons';
+import { Search, MapPin, Star } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -32,7 +29,16 @@ interface MapFiltersProps {
   onSearchChange: (query: string) => void;
   onServiceSelect: (serviceId: string) => void;
   selectedService?: string;
+  compact?: boolean;
 }
+
+const DISTANCE_OPTIONS: { label: string; value: number | null }[] = [
+  { label: 'All distances', value: null },
+  { label: 'Within 1 km', value: 1 },
+  { label: 'Within 3 km', value: 3 },
+  { label: 'Within 5 km', value: 5 },
+  { label: 'Within 10 km', value: 10 },
+];
 
 export function MapFilters({
   services,
@@ -45,177 +51,220 @@ export function MapFilters({
   onSearchChange,
   onServiceSelect,
   selectedService,
+  compact = false,
 }: MapFiltersProps) {
   const filteredAndSortedServices = useMemo(() => {
-    let filtered = services.filter((service) => {
-      // Filter by category
-      if (selectedCategory && service.category !== selectedCategory) {
-        return false;
-      }
+    const q = searchQuery.trim().toLowerCase();
 
-      // Filter by distance
-      if (selectedDistance && service.latitude && service.longitude) {
-        const distance = calculateDistance(userCoordinates, {
+    const filtered = services.filter((service) => {
+      // 1. Category filter
+      if (selectedCategory && service.category !== selectedCategory) return false;
+
+      // 2. Distance filter — only apply when service has coordinates
+      if (selectedDistance !== null) {
+        if (!service.latitude || !service.longitude) return false;
+        const dist = calculateDistance(userCoordinates, {
           latitude: service.latitude,
           longitude: service.longitude,
         });
-        if (distance > selectedDistance) {
-          return false;
-        }
+        if (dist > selectedDistance) return false;
       }
 
-      // Filter by search query - must match at least one field
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-          service.providerName.toLowerCase().includes(query) ||
-          service.serviceName.toLowerCase().includes(query) ||
-          service.category.toLowerCase().includes(query) ||
-          service.providerLocation.toLowerCase().includes(query);
-        
-        if (!matchesSearch) {
-          return false;
-        }
+      // 3. Search filter — independent of distance/category
+      if (q) {
+        const match =
+          service.providerName.toLowerCase().includes(q) ||
+          service.serviceName.toLowerCase().includes(q) ||
+          service.category.toLowerCase().includes(q) ||
+          service.providerLocation.toLowerCase().includes(q);
+        if (!match) return false;
       }
 
       return true;
     });
 
-    // Sort by distance
     return sortByDistance(filtered, userCoordinates);
   }, [services, selectedCategory, selectedDistance, searchQuery, userCoordinates]);
 
   return (
-    <div className="bg-white h-full overflow-y-auto flex flex-col animate-fade-in">
-      {/* Header */}
-      <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-        <h2 className="text-lg font-bold mb-4 text-gray-900">Services Nearby</h2>
+    <div className="flex flex-col h-full bg-white">
+      {/* ── Header / Filters ── */}
+      <div className="shrink-0 border-b border-border">
+        {/* Title */}
+        {!compact && (
+          <div className="px-4 pt-4 pb-3 border-b border-border/60">
+            <h2 className="text-base font-bold text-foreground">Services Nearby</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Find providers around your location</p>
+          </div>
+        )}
 
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search provider or service..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="input-modern w-full mb-4"
-        />
+        <div className="px-4 py-3 space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search provider or service..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            />
+          </div>
 
-        {/* Category Filter */}
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Category</p>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => onCategoryChange(null)}
-              className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
-                selectedCategory === null
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All Services
-            </button>
-            {CATEGORIES.map((category) => (
+          {/* Category chips — horizontal scroll */}
+          <div>
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Category</p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
-                key={category}
-                onClick={() => onCategoryChange(category)}
-                className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
-                  selectedCategory === category
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                onClick={() => onCategoryChange(null)}
+                className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full border transition-all ${
+                  selectedCategory === null
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
                 }`}
               >
-                {category}
+                All
               </button>
-            ))}
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => onCategoryChange(cat === selectedCategory ? null : cat)}
+                  className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full border transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Distance chips */}
+          <div>
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distance</p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {DISTANCE_OPTIONS.map(({ label, value }) => (
+                <button
+                  key={label}
+                  onClick={() => onDistanceChange(value)}
+                  className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full border transition-all ${
+                    selectedDistance === value
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Distance Filter */}
-        <div>
-          <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Distance</p>
-          <div className="flex flex-col gap-2">
-            {[null, 1, 3, 5, 10].map((distance) => (
-              <button
-                key={distance || 'all'}
-                onClick={() => onDistanceChange(distance)}
-                className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
-                  selectedDistance === distance
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {distance ? `Within ${distance} km` : 'All distances'}
-              </button>
-            ))}
-          </div>
+        {/* Results count */}
+        <div className="px-4 py-2 bg-muted/40 border-t border-border/60">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">{filteredAndSortedServices.length}</span>
+            {' '}service{filteredAndSortedServices.length !== 1 ? 's' : ''} found
+          </p>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="px-4 pt-3 text-xs text-gray-600">
-        {filteredAndSortedServices.length} service{filteredAndSortedServices.length !== 1 ? 's' : ''} found
-      </div>
-
-      {/* Service List */}
+      {/* ── Service list ── */}
       <div className="flex-1 overflow-y-auto">
         {filteredAndSortedServices.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 text-sm">
-            No services found matching your criteria.
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <MapPin className="w-10 h-10 text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium text-foreground">No services found</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Try adjusting your filters or expanding the distance
+            </p>
           </div>
         ) : (
-          filteredAndSortedServices.map((service) => {
-            const distance = service.latitude && service.longitude
-              ? calculateDistance(userCoordinates, {
-                  latitude: service.latitude,
-                  longitude: service.longitude,
-                })
-              : null;
+          <ul>
+            {filteredAndSortedServices.map((service) => {
+              const distance =
+                service.latitude && service.longitude
+                  ? calculateDistance(userCoordinates, {
+                      latitude: service.latitude,
+                      longitude: service.longitude,
+                    })
+                  : null;
 
-            return (
-              <button
-                key={service.id}
-                onClick={() => onServiceSelect(service.id)}
-                className={`w-full text-left px-4 py-3 border-b transition-smooth ${
-                  selectedService === service.id
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-l-blue-500'
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex gap-3">
-                  {service.image && (
-                    <img
-                      src={service.image}
-                      alt={service.serviceName}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 truncate">
-                      {service.providerName}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {service.serviceName}
-                    </p>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs font-semibold text-gray-700">
-                        ₹{service.price}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="text-xs">⭐ {service.rating.toFixed(1)}</span>
-                        {distance && (
-                          <span className="text-xs text-gray-500">
-                            {formatDistance(distance)}
+              const isSelected = selectedService === service.id;
+
+              return (
+                <li key={service.id}>
+                  <button
+                    onClick={() => onServiceSelect(service.id)}
+                    className={`w-full text-left px-4 py-3 border-b border-border/60 transition-all duration-150 ${
+                      isSelected
+                        ? 'bg-primary/5 border-l-[3px] border-l-primary'
+                        : 'hover:bg-muted/40 border-l-[3px] border-l-transparent'
+                    }`}
+                  >
+                    <div className="flex gap-3 items-start">
+                      {/* Provider image or category fallback */}
+                      <div className="shrink-0 w-11 h-11 rounded-lg overflow-hidden bg-muted flex items-center justify-center text-lg">
+                        {service.image ? (
+                          <img
+                            src={service.image}
+                            alt={service.serviceName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-lg">
+                            {getCategoryEmoji(service.category)}
                           </span>
                         )}
-                      </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-foreground leading-tight truncate">
+                          {service.providerName}
+                        </p>
+                        <p className="text-xs text-primary font-medium truncate mt-0.5">
+                          {service.serviceName}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="text-sm font-bold text-foreground">
+                            &#8377;{service.price}
+                          </span>
+                          <span className="flex items-center gap-0.5 text-xs text-amber-600">
+                            <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" />
+                            {service.rating.toFixed(1)}
+                          </span>
+                          {distance !== null && (
+                            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                              <MapPin className="w-3 h-3" />
+                              {formatDistance(distance)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </button>
-            );
-          })
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </div>
   );
+}
+
+function getCategoryEmoji(category: string): string {
+  const map: Record<string, string> = {
+    Plumbing: '🔧',
+    Electrical: '⚡',
+    Carpentry: '🔨',
+    'AC Repair': '❄️',
+    Cleaning: '🧹',
+    Tutoring: '📚',
+    Painting: '🎨',
+    'Pest Control': '🐛',
+  };
+  return map[category] ?? '📍';
 }

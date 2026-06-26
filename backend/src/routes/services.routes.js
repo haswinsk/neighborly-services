@@ -39,7 +39,7 @@ router.post(
   requireAuth,
   requireRole("provider"),
   asyncHandler(async (req, res) => {
-    const { serviceName, description, price, category } = req.body;
+    const { serviceName, description, price, category, address, city, state, latitude, longitude } = req.body;
 
     const normalizedServiceName = assertRequiredString(serviceName, "Service name");
     const normalizedDescription = assertRequiredString(description, "Description");
@@ -47,6 +47,11 @@ router.post(
     const normalizedPrice = assertNumber(price, "Price", { min: 0 });
 
     const provider = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+    // Use provided lat/lng, or fall back to provider's stored location
+    const serviceLat = (typeof latitude === "number" && !isNaN(latitude)) ? latitude : (provider?.latitude ?? null);
+    const serviceLng = (typeof longitude === "number" && !isNaN(longitude)) ? longitude : (provider?.longitude ?? null);
+
     const service = await prisma.service.create({
       data: {
         id: createPublicId("s"),
@@ -57,6 +62,11 @@ router.post(
         providerId: req.user.id,
         providerName: provider?.name || req.user.name,
         providerLocation: provider?.location || req.user.location,
+        address: address || provider?.address || "",
+        city: city || provider?.city || "",
+        state: state || provider?.state || "",
+        latitude: serviceLat,
+        longitude: serviceLng,
         rating: 0,
         reviewCount: 0,
       },
