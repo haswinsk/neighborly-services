@@ -125,13 +125,15 @@ function FitBounds({
     });
 
     if (positions.length > 1) {
-      map.fitBounds(L.latLngBounds(positions).pad(0.15), {
+      // Simple fit like Google Maps - show all markers with padding
+      map.fitBounds(L.latLngBounds(positions), {
         animate: true,
-        maxZoom: 16,
-        minZoom: 11,
+        padding: [50, 50],
+        maxZoom: 15,
       });
     } else {
-      map.setView([userCoords.latitude, userCoords.longitude], 14, {
+      // Single location - zoom to street level
+      map.setView([userCoords.latitude, userCoords.longitude], 15, {
         animate: true,
       });
     }
@@ -299,8 +301,8 @@ export function ServiceMap({
         className="h-full w-full"
         style={{ zIndex: 0 }}
         zoomControl={false}
-        minZoom={10}
-        maxZoom={18}
+        minZoom={5}
+        maxZoom={19}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
