@@ -40,29 +40,9 @@ const ServiceListingPage = () => {
     window.location.href = `/services/${serviceId}`;
   };
 
-  if (loading || !coordinates) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b bg-card">
-          <div className="container flex items-center justify-between py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Wrench className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground">LocalServ</span>
-            </Link>
-            {isAuthenticated ? (
-              <Link to="/customer"><Button variant="ghost" size="sm">Dashboard</Button></Link>
-            ) : (
-              <Link to="/login"><Button size="sm">Sign In</Button></Link>
-            )}
-          </div>
-        </header>
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading map...</p>
-        </div>
-      </div>
-    );
+  // Show map immediately even while loading coordinates
+  if (!coordinates) {
+    return null;
   }
 
   return (
@@ -120,9 +100,22 @@ const ServiceListingPage = () => {
               mapElement.classList.toggle("hidden");
             }
           }}
-          className="rounded-full h-14 w-14 shadow-lg"
+          className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-all transform hover:scale-110 flex items-center justify-center"
+          title="View Map"
         >
-          🗺️
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 20l-5.447-2.724A1 1 0 003 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6.553 3.276A1 1 0 0118 20.382V9.618a1 1 0 00-1.447-.894L9 11m0 13V7m6-4l5.447-2.724A1 1 0 0121 3.618v10.764a1 1 0 01-1.447.894L15 10m0 7v6m0-13V5"
+            />
+          </svg>
         </Button>
       </div>
 

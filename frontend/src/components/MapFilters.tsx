@@ -64,14 +64,18 @@ export function MapFilters({
         }
       }
 
-      // Filter by search query
+      // Filter by search query - must match at least one field
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        return (
+        const matchesSearch =
           service.providerName.toLowerCase().includes(query) ||
           service.serviceName.toLowerCase().includes(query) ||
-          service.category.toLowerCase().includes(query)
-        );
+          service.category.toLowerCase().includes(query) ||
+          service.providerLocation.toLowerCase().includes(query);
+        
+        if (!matchesSearch) {
+          return false;
+        }
       }
 
       return true;
@@ -82,10 +86,10 @@ export function MapFilters({
   }, [services, selectedCategory, selectedDistance, searchQuery, userCoordinates]);
 
   return (
-    <div className="bg-white h-full overflow-y-auto flex flex-col">
+    <div className="bg-white h-full overflow-y-auto flex flex-col animate-fade-in">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-bold mb-4">Services Nearby</h2>
+      <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <h2 className="text-lg font-bold mb-4 text-gray-900">Services Nearby</h2>
 
         {/* Search */}
         <input
@@ -93,18 +97,18 @@ export function MapFilters({
           placeholder="Search provider or service..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input-modern w-full mb-4"
         />
 
         {/* Category Filter */}
         <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-700 mb-2">Category</p>
-          <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Category</p>
+          <div className="flex flex-col gap-2">
             <button
               onClick={() => onCategoryChange(null)}
-              className={`text-left px-3 py-2 text-sm rounded-md transition ${
+              className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
                 selectedCategory === null
-                  ? 'bg-blue-100 text-blue-700 font-semibold'
+                  ? 'bg-blue-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -114,9 +118,9 @@ export function MapFilters({
               <button
                 key={category}
                 onClick={() => onCategoryChange(category)}
-                className={`text-left px-3 py-2 text-sm rounded-md transition ${
+                className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
                   selectedCategory === category
-                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                    ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -128,15 +132,15 @@ export function MapFilters({
 
         {/* Distance Filter */}
         <div>
-          <p className="text-xs font-semibold text-gray-700 mb-2">Distance</p>
-          <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Distance</p>
+          <div className="flex flex-col gap-2">
             {[null, 1, 3, 5, 10].map((distance) => (
               <button
                 key={distance || 'all'}
                 onClick={() => onDistanceChange(distance)}
-                className={`text-left px-3 py-2 text-sm rounded-md transition ${
+                className={`text-left px-3 py-2 text-sm rounded-lg transition-smooth font-medium ${
                   selectedDistance === distance
-                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                    ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -171,9 +175,9 @@ export function MapFilters({
               <button
                 key={service.id}
                 onClick={() => onServiceSelect(service.id)}
-                className={`w-full text-left px-4 py-3 border-b transition ${
+                className={`w-full text-left px-4 py-3 border-b transition-smooth ${
                   selectedService === service.id
-                    ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-l-blue-500'
                     : 'hover:bg-gray-50'
                 }`}
               >

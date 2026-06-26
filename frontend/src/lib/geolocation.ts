@@ -20,7 +20,7 @@ export interface GeolocationState {
 
 export const useGeolocation = (): GeolocationState => {
   const [state, setState] = useState<GeolocationState>({
-    coordinates: null,
+    coordinates: DEFAULT_COORDINATES,
     loading: true,
     error: null,
   });
@@ -32,64 +32,64 @@ export const useGeolocation = (): GeolocationState => {
         loading: false,
         error: 'Geolocation not supported',
       });
-      toast.error('Geolocation not supported. Using default location.');
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setState({
-        coordinates: DEFAULT_COORDINATES,
-        loading: false,
-        error: 'Geolocation timeout',
-      });
-      toast.error('Location detection timed out. Using default location.');
-    }, 10000);
+    let timeoutId: NodeJS.Timeout;
+    let isAborted = false;
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        clearTimeout(timeout);
-        setState({
-          coordinates: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
-          loading: false,
-          error: null,
-        });
-        toast.success('Location detected');
-      },
-      (error) => {
-        clearTimeout(timeout);
-        let errorMessage = 'Permission denied';
-
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = 'Location permission denied';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMessage = 'Location information unavailable';
-        } else if (error.code === error.TIMEOUT) {
-          errorMessage = 'Location request timeout';
-        }
-
+    const handleTimeout = () => {
+      if (!isAborted) {
         setState({
           coordinates: DEFAULT_COORDINATES,
           loading: false,
-          error: errorMessage,
+          error: 'Location request timed out',
         });
+        isAborted = true;
+      }
+    };
 
-        if (error.code === error.PERMISSION_DENIED) {
-          toast.info('Using default location. Enable location to see nearby services.');
-        } else {
-          toast.error(`Location error: ${errorMessage}. Using default location.`);
+    // Single timeout: 8 seconds
+    timeoutId = setTimeout(handleTimeout, 8000);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        clearTimeout(timeoutId);
+        if (!isAborted) {
+          setState({
+            coordinates: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            },
+            loading: false,
+            error: null,
+          });
+          isAborted = true;
+        }
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        if (!isAborted) {
+          // Immediately use default on any error
+          setState({
+            coordinates: DEFAULT_COORDINATES,
+            loading: false,
+            error: `Location unavailable: ${error.message}`,
+          });
+          isAborted = true;
         }
       },
       {
         enableHighAccuracy: false,
-        timeout: 5000,
+        timeout: 7000,
         maximumAge: 0,
       }
     );
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeoutId);
+      isAborted = true;
+    };
   }, []);
 
   return state;
