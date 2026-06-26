@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Coordinates } from '@/lib/geolocation';
-import { sortByDistance, formatDistance } from '@/lib/distance';
+import { sortByDistance, formatDistance, calculateDistance } from '@/lib/distance';
 import { CATEGORIES } from '@/lib/markerIcons';
 import { Search, MapPin, Star } from 'lucide-react';
 
