@@ -83,11 +83,11 @@ const ServiceListingPage = () => {
         </div>
       )}
 
-      {/* Main content: Sidebar (left) + Map (right) */}
+      {/* Main content: Sidebar (left, scrollable) + Map (right, fixed) */}
       <div className="flex-1 flex overflow-hidden relative">
 
-        {/* DESKTOP SIDEBAR (LEFT) */}
-        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white h-full overflow-hidden shadow-lg">
+        {/* DESKTOP SIDEBAR (LEFT) — Scrollable */}
+        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white overflow-y-auto shadow-lg">
           <MapFilters
             services={filteredServices}
             allServices={services}
@@ -103,8 +103,8 @@ const ServiceListingPage = () => {
           />
         </aside>
 
-        {/* DESKTOP MAP (RIGHT, FULL) */}
-        <div className="hidden md:flex flex-1 relative">
+        {/* DESKTOP MAP (RIGHT) — Fixed position, doesn't scroll */}
+        <div className="hidden md:flex flex-1 relative h-[calc(100vh-var(--header-height,80px))]">
           <ServiceMap
             services={filteredServices}
             userCoordinates={displayCoordinates}
@@ -114,7 +114,7 @@ const ServiceListingPage = () => {
           />
         </div>
 
-        {/* MOBILE: Single view (either map or list) */}
+        {/* MOBILE: Single view (either map or list) — Full page scrollable */}
         <div className="md:hidden flex-1 flex flex-col w-full overflow-hidden">
           {showMobileMap ? (
             <div className="flex-1 relative">
