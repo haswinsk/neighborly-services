@@ -11,6 +11,12 @@ import { MapFilters } from "@/components/MapFilters";
 import { calculateDistance } from "@/lib/distance";
 import { Header } from "@/components/Header";
 
+// Default to Coimbatore for testing/fallback
+const DEFAULT_LOCATION: Coordinates = {
+  latitude: 11.0126,
+  longitude: 76.9558,
+};
+
 const ServiceListingPage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -19,18 +25,13 @@ const ServiceListingPage = () => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
+  const [useDefaultLocation, setUseDefaultLocation] = useState(false);
   const { isAuthenticated } = useAuth();
   const { coordinates, loading } = useGeolocation();
   const navigate = useNavigate();
 
-  // Default location (Perundurai) while user location is loading
-  const DEFAULT_LOCATION: Coordinates = {
-    latitude: 11.0089,
-    longitude: 76.9706,
-  };
-
-  // Use user location if available, otherwise default to Perundurai
-  const displayCoordinates = coordinates || DEFAULT_LOCATION;
+  // Use GPS coordinates if available, fallback to Coimbatore if user opts in
+  const displayCoordinates = coordinates || (useDefaultLocation ? DEFAULT_LOCATION : null);
 
   useEffect(() => {
     apiRequest<{ services: Service[] }>("/services")
@@ -38,14 +39,14 @@ const ServiceListingPage = () => {
       .catch(() => setServices([]));
   }, []);
 
-  // Filter services client-side
+  // Filter services client-side based on category, distance, and search
   const filteredServices = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return services.filter((service) => {
       if (selectedCategory && service.category !== selectedCategory) return false;
 
-      // Only apply distance filter if user has actual coordinates (not default location)
-      if (selectedDistance && coordinates && coordinates !== DEFAULT_LOCATION) {
+      // Apply distance filter only if user has coordinates
+      if (selectedDistance && coordinates) {
         if (!service.latitude || !service.longitude) return false;
         const dist = calculateDistance(coordinates as Coordinates, {
           latitude: service.latitude,
@@ -72,6 +73,8 @@ const ServiceListingPage = () => {
     navigate(`/services/${serviceId}`);
   }, [navigate]);
 
+
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -84,59 +87,12 @@ const ServiceListingPage = () => {
         </div>
       )}
 
-      {/* Main content: Map + Sidebar */}
+      {/* Main content: Sidebar (left) + Map (right) */}
       <div className="flex-1 flex overflow-hidden relative">
 
-        {/* ── DESKTOP MAP ── */}
-        <div className="hidden md:flex flex-1 relative">
-          <ServiceMap
-            services={filteredServices}
-            userCoordinates={displayCoordinates}
-            selectedService={selectedService || undefined}
-            onMarkerClick={handleServiceSelect}
-            onBookNow={handleBookNow}
-          />
-        </div>
-
-        {/* ── DESKTOP SIDEBAR ── */}
-        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-l border-border bg-white h-full overflow-hidden shadow-xl">
-          <MapFilters
-            services={filteredServices}
-            allServices={services}
-            selectedCategory={selectedCategory}
-            selectedDistance={selectedDistance}
-            searchQuery={searchQuery}
-            userCoordinates={displayCoordinates}
-            onCategoryChange={setSelectedCategory}
-            onDistanceChange={setSelectedDistance}
-            onSearchChange={setSearchQuery}
-            onServiceSelect={handleServiceSelect}
-            selectedService={selectedService || undefined}
-          />
-        </aside>
-
-        {/* ── MOBILE MAP (full screen overlay) ── */}
-        {showMobileMap && (
-          <div className="md:hidden absolute inset-0 z-[500] bg-white">
-            <ServiceMap
-              services={filteredServices}
-              userCoordinates={displayCoordinates}
-              selectedService={selectedService || undefined}
-              onMarkerClick={handleServiceSelect}
-              onBookNow={handleBookNow}
-            />
-            <button
-              onClick={() => setShowMobileMap(false)}
-              className="absolute top-4 right-4 z-[600] bg-white text-gray-800 rounded-xl px-4 py-2 text-sm font-semibold shadow-lg border border-gray-200"
-            >
-              Close Map
-            </button>
-          </div>
-        )}
-
-        {/* ── MOBILE: full-screen service list ── */}
-        {!showMobileMap && (
-          <div className="md:hidden flex flex-col w-full h-full overflow-hidden bg-white">
+        {/* ── DESKTOP SIDEBAR (LEFT) ── */}
+        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white h-full overflow-hidden shadow-lg">
+          {displayCoordinates ? (
             <MapFilters
               services={filteredServices}
               allServices={services}
@@ -149,10 +105,98 @@ const ServiceListingPage = () => {
               onSearchChange={setSearchQuery}
               onServiceSelect={handleServiceSelect}
               selectedService={selectedService || undefined}
-              compact
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
+              {loading ? (
+                <>
+                  <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground text-center">Detecting your location...</p>
+                  <p className="text-xs text-gray-500 text-center">Please enable location access</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground text-center">Unable to detect your location</p>
+                  <Button
+                    onClick={() => setUseDefaultLocation(true)}
+                    className="w-full"
+                  >
+                    Use Coimbatore
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center">Or enable location permission and refresh</p>
+                </>
+              )}
+            </div>
+          )}
+        </aside>
+
+        {/* ── DESKTOP MAP (RIGHT, FULL) ── */}
+        {displayCoordinates && (
+          <div className="hidden md:flex flex-1 relative">
+            <ServiceMap
+              services={filteredServices}
+              userCoordinates={displayCoordinates}
+              selectedService={selectedService || undefined}
+              onMarkerClick={handleServiceSelect}
+              onBookNow={handleBookNow}
             />
           </div>
         )}
+
+        {/* ── MOBILE: Single view (either map or list) ── */}
+        <div className="md:hidden flex-1 flex flex-col w-full overflow-hidden">
+          {displayCoordinates ? (
+            <>
+              {showMobileMap ? (
+                <div className="flex-1 relative">
+                  <ServiceMap
+                    services={filteredServices}
+                    userCoordinates={displayCoordinates}
+                    selectedService={selectedService || undefined}
+                    onMarkerClick={handleServiceSelect}
+                    onBookNow={handleBookNow}
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto">
+                  <MapFilters
+                    services={filteredServices}
+                    allServices={services}
+                    selectedCategory={selectedCategory}
+                    selectedDistance={selectedDistance}
+                    searchQuery={searchQuery}
+                    userCoordinates={displayCoordinates}
+                    onCategoryChange={setSelectedCategory}
+                    onDistanceChange={setSelectedDistance}
+                    onSearchChange={setSearchQuery}
+                    onServiceSelect={handleServiceSelect}
+                    selectedService={selectedService || undefined}
+                    compact
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
+              {loading ? (
+                <>
+                  <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground">Detecting location...</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground text-center">Unable to detect your location</p>
+                  <Button
+                    onClick={() => setUseDefaultLocation(true)}
+                    className="w-full"
+                  >
+                    Use Coimbatore
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── MOBILE FAB: Toggle Map ── */}

@@ -42,8 +42,8 @@ export const useGeolocation = (): GeolocationState => {
         loading: false,
         error: 'Geolocation timeout',
       });
-      toast.error('Location detection timed out. Using default location.');
-    }, 10000);
+      toast.error('Location detection timed out.');
+    }, 15000);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -56,7 +56,6 @@ export const useGeolocation = (): GeolocationState => {
           loading: false,
           error: null,
         });
-        toast.success('Location detected');
       },
       (error) => {
         clearTimeout(timeout);
@@ -70,21 +69,22 @@ export const useGeolocation = (): GeolocationState => {
           errorMessage = 'Location request timeout';
         }
 
+        // Don't use default location immediately — wait for user action
         setState({
-          coordinates: DEFAULT_COORDINATES,
+          coordinates: null,
           loading: false,
           error: errorMessage,
         });
 
         if (error.code === error.PERMISSION_DENIED) {
-          toast.info('Using default location. Enable location to see nearby services.');
+          toast.info('Enable location permission to see nearby services');
         } else {
-          toast.error(`Location error: ${errorMessage}. Using default location.`);
+          toast.error(`Location error: ${errorMessage}`);
         }
       },
       {
-        enableHighAccuracy: false,
-        timeout: 5000,
+        enableHighAccuracy: true,
+        timeout: 10000,
         maximumAge: 0,
       }
     );
