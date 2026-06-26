@@ -49,8 +49,8 @@ export const useGeolocation = (): GeolocationState => {
       }
     };
 
-    // Single timeout: 8 seconds
-    timeoutId = setTimeout(handleTimeout, 8000);
+    // Single timeout: 10 seconds for high accuracy GPS
+    timeoutId = setTimeout(handleTimeout, 10000);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -80,9 +80,9 @@ export const useGeolocation = (): GeolocationState => {
         }
       },
       {
-        enableHighAccuracy: false,
-        timeout: 7000,
-        maximumAge: 0,
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
       }
     );
 
@@ -102,17 +102,23 @@ export const getCurrentCoordinates = async (): Promise<Coordinates> => {
       return;
     }
 
+    const timeoutId = setTimeout(() => {
+      resolve(DEFAULT_COORDINATES);
+    }, 10000);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        clearTimeout(timeoutId);
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
       },
       () => {
+        clearTimeout(timeoutId);
         resolve(DEFAULT_COORDINATES);
       },
-      { enableHighAccuracy: false, timeout: 5000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
   });
 };

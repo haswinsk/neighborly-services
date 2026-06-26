@@ -31,6 +31,7 @@ interface ServiceMapProps {
 // Map controls component
 function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
   const map = useMap();
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     // Add zoom control
@@ -40,29 +41,81 @@ function MapControls({ userCoordinates }: { userCoordinates: Coordinates }) {
     L.control.scale({ position: 'bottomleft' }).addTo(map);
   }, [map]);
 
-  const handleLocateMe = () => {
-    map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
-      animate: true,
-    });
+  const handleLocateMe = async () => {
+    if (isLocating) return;
+    
+    setIsLocating(true);
+    try {
+      // Get fresh GPS location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const newLat = position.coords.latitude;
+            const newLng = position.coords.longitude;
+            
+            map.setView([newLat, newLng], 13, {
+              animate: true,
+              duration: 0.5,
+            });
+            
+            setIsLocating(false);
+          },
+          () => {
+            // Fallback to stored coordinates
+            map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
+              animate: true,
+              duration: 0.5,
+            });
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else {
+        map.setView([userCoordinates.latitude, userCoordinates.longitude], 13, {
+          animate: true,
+          duration: 0.5,
+        });
+        setIsLocating(false);
+      }
+    } catch (error) {
+      setIsLocating(false);
+    }
   };
 
   const handleResetView = () => {
-    const bounds = L.latLngBounds([
-      [userCoordinates.latitude, userCoordinates.longitude],
-    ]);
-    map.fitBounds(bounds.pad(0.1), { animate: true });
+    const allLocations = [
+      [userCoordinates.latitude, userCoordinates.longitude] as [number, number],
+    ];
+    
+    // Add all service locations to bounds
+    map.eachLayer((layer: any) => {
+      if (layer instanceof L.Marker && layer !== map) {
+        const latLng = layer.getLatLng();
+        allLocations.push([latLng.lat, latLng.lng] as [number, number]);
+      }
+    });
+
+    if (allLocations.length > 0) {
+      const bounds = L.latLngBounds(allLocations);
+      map.fitBounds(bounds.pad(0.1), { animate: true, duration: 0.5 });
+    }
   };
 
   return (
     <div className="absolute bottom-6 right-6 z-400 flex flex-col gap-2">
       <button
         onClick={handleLocateMe}
-        className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 shadow-lg transition"
-        title="Locate me"
+        disabled={isLocating}
+        className={`rounded-lg p-2 shadow-lg transition ${
+          isLocating
+            ? 'bg-blue-400 cursor-not-allowed opacity-75'
+            : 'bg-blue-500 hover:bg-blue-600'
+        } text-white`}
+        title={isLocating ? 'Finding your location...' : 'Locate me'}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
+          className={`w-6 h-6 ${isLocating ? 'animate-spin' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -127,8 +180,8 @@ export function ServiceMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* User Location Marker */}
-        <Marker position={centerCoords} icon={createUserMarker()}>
+        {/* User Location Marker - uniquely keyed to prevent duplication */}
+        <Marker key="user-marker" position={centerCoords} icon={createUserMarker()}>
           <Popup>Your Location</Popup>
         </Marker>
 
