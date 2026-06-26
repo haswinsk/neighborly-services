@@ -125,15 +125,16 @@ function FitBounds({
     });
 
     if (positions.length > 1) {
-      // Simple fit like Google Maps - show all markers with padding
+      // Show all markers - never zoom out beyond minZoom 12
       map.fitBounds(L.latLngBounds(positions), {
         animate: true,
         padding: [50, 50],
         maxZoom: 15,
+        minZoom: 12,
       });
     } else {
       // Single location - zoom to street level
-      map.setView([userCoords.latitude, userCoords.longitude], 15, {
+      map.setView([userCoords.latitude, userCoords.longitude], 14, {
         animate: true,
       });
     }
@@ -301,7 +302,7 @@ export function ServiceMap({
         className="h-full w-full"
         style={{ zIndex: 0 }}
         zoomControl={false}
-        minZoom={5}
+        minZoom={12}
         maxZoom={19}
       >
         <TileLayer
