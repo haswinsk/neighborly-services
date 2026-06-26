@@ -4,21 +4,35 @@ import { Wrench, Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/NotificationBell";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
+  const commonNavLinks = [
+    { href: "/services", label: "Services", exact: false },
+    { href: "/about", label: "About", exact: true },
+  ];
+
   const navLinks = isAuthenticated ? [
-    { href: "/services", label: "Services", exact: false },
+    ...commonNavLinks,
     { href: user?.role === "admin" ? "/admin" : user?.role === "provider" ? "/provider" : "/customer", label: "Dashboard", exact: true },
-    { href: "/profile", label: "Profile", exact: true },
   ] : [
-    { href: "/services", label: "Services", exact: false },
+    ...commonNavLinks,
+    { href: "/register", label: "Become Provider", exact: true },
   ];
 
   const handleLogout = () => {
@@ -29,7 +43,11 @@ export const Header = () => {
   return (
     <>
       <NotificationCenter />
-      <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur-sm transition-smooth shadow-soft">
+      <header className={`sticky top-0 z-40 transition-smooth ${
+        isScrolled
+          ? "border-b bg-white/95 backdrop-blur-sm shadow-soft"
+          : "border-b border-transparent bg-transparent"
+      }`}>
         <div className="container flex items-center justify-between py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-smooth hover:opacity-80">
