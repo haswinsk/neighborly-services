@@ -72,7 +72,7 @@ const ServiceListingPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       <Header />
 
       {/* Location detection strip — only shown while GPS is loading */}
@@ -84,10 +84,10 @@ const ServiceListingPage = () => {
       )}
 
       {/* Main content: Sidebar (left, scrollable) + Map (right, fixed) */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative h-full">
 
-        {/* DESKTOP SIDEBAR (LEFT) — Scrollable */}
-        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white overflow-y-auto shadow-lg">
+        {/* DESKTOP SIDEBAR (LEFT) — Scrollable only */}
+        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white overflow-y-auto shadow-lg h-full">
           <MapFilters
             services={filteredServices}
             allServices={services}
@@ -103,8 +103,8 @@ const ServiceListingPage = () => {
           />
         </aside>
 
-        {/* DESKTOP MAP (RIGHT) — Fixed position, doesn't scroll */}
-        <div className="hidden md:flex flex-1 relative h-[calc(100vh-var(--header-height,80px))]">
+        {/* DESKTOP MAP (RIGHT) — Fixed, doesn't scroll with sidebar */}
+        <div className="hidden md:flex flex-1 relative h-full">
           <ServiceMap
             services={filteredServices}
             userCoordinates={displayCoordinates}
