@@ -31,8 +31,30 @@ interface ServiceMapProps {
   /** When set, shows a green "customer" marker at these coords (used in provider view) */
   customerCoordinates?: Coordinates | null;
   selectedService?: string;
+  focusLocation?: Coordinates & { customerName?: string };
   onMarkerClick?: (serviceId: string) => void;
   onBookNow?: (serviceId: string) => void;
+}
+
+// ── Focus on customer location from booking ────────────────────────────────
+function FocusLocationMarker({
+  focusLocation,
+}: {
+  focusLocation?: Coordinates & { customerName?: string };
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!focusLocation) return;
+
+    // Fly to customer location
+    map.flyTo([focusLocation.latitude, focusLocation.longitude], 16, {
+      duration: 1.5,
+      easeLinearity: 0.25,
+    });
+  }, [focusLocation, map]);
+
+  return null;
 }
 
 // ── Focus on selected service marker with smooth animation ─────────────────
@@ -291,6 +313,7 @@ export function ServiceMap({
   userCoordinates,
   customerCoordinates,
   selectedService,
+  focusLocation,
   onMarkerClick,
   onBookNow,
 }: ServiceMapProps) {
@@ -324,6 +347,9 @@ export function ServiceMap({
 
         {/* Focus on selected provider with smooth animation */}
         <FocusMarker selectedService={selectedService} services={services} />
+
+        {/* Focus on customer location from booking (when provider clicks "See Location") */}
+        <FocusLocationMarker focusLocation={focusLocation} />
 
         {/* Show routing line from customer to selected provider (provider view) */}
         {selectedService && customerCoordinates && (

@@ -23,6 +23,7 @@ const ServiceListingPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
+  const [focusLocation, setFocusLocation] = useState<{ latitude: number; longitude: number; customerName?: string } | null>(null);
   const { coordinates, loading } = useGeolocation();
   const navigate = useNavigate();
 
@@ -69,7 +70,19 @@ const ServiceListingPage = () => {
     navigate(`/services/${serviceId}`);
   }, [navigate]);
 
-
+  // Handle focus location from booking card (when provider clicks "See Location")
+  useEffect(() => {
+    const focusData = sessionStorage.getItem("focusLocation");
+    if (focusData) {
+      try {
+        const { latitude, longitude, customerName, bookingId } = JSON.parse(focusData);
+        setFocusLocation({ latitude, longitude, customerName });
+        sessionStorage.removeItem("focusLocation");
+      } catch (err) {
+        console.error("Failed to parse focus location:", err);
+      }
+    }
+  }, []);
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -109,6 +122,7 @@ const ServiceListingPage = () => {
             services={filteredServices}
             userCoordinates={displayCoordinates}
             selectedService={selectedService || undefined}
+            focusLocation={focusLocation || undefined}
             onMarkerClick={handleServiceSelect}
             onBookNow={handleBookNow}
           />
@@ -122,6 +136,7 @@ const ServiceListingPage = () => {
                 services={filteredServices}
                 userCoordinates={displayCoordinates}
                 selectedService={selectedService || undefined}
+                focusLocation={focusLocation || undefined}
                 onMarkerClick={handleServiceSelect}
                 onBookNow={handleBookNow}
               />

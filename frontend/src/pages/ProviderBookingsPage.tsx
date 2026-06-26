@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BookingStatus, Booking } from "@/types";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
 import { MiniMap, LocationBadge } from "@/components/MiniMap";
-import { MapPin, User, Calendar, IndianRupee, ClipboardList, RefreshCw, AlertCircle } from "lucide-react";
+import { MapPin, User, Calendar, IndianRupee, ClipboardList, RefreshCw, AlertCircle, Navigation } from "lucide-react";
 
 function BookingSkeleton() {
   return (
@@ -29,10 +30,27 @@ function BookingSkeleton() {
 }
 
 const ProviderBookingsPage = () => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleSeeLocation = (booking: Booking) => {
+    if (booking.customerLatitude && booking.customerLongitude) {
+      // Store location data in sessionStorage to pass to map view
+      sessionStorage.setItem(
+        "focusLocation",
+        JSON.stringify({
+          latitude: booking.customerLatitude,
+          longitude: booking.customerLongitude,
+          customerName: booking.customerName,
+          bookingId: booking.id,
+        })
+      );
+      navigate("/services");
+    }
+  };
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -175,10 +193,23 @@ const ProviderBookingsPage = () => {
 
                   {/* Customer Location */}
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-green-500" />
-                      Customer Location
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-green-500" />
+                        Customer Location
+                      </p>
+                      {hasCustomerCoords && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-auto p-1.5 text-xs gap-1.5"
+                          onClick={() => handleSeeLocation(b)}
+                        >
+                          <Navigation className="w-3.5 h-3.5" />
+                          See Location
+                        </Button>
+                      )}
+                    </div>
                     {hasCustomerCoords ? (
                       <MiniMap
                         height={160}
