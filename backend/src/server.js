@@ -47,7 +47,9 @@ app.use(
       "http://localhost:5173",
       "http://localhost:8082",
       "https://neighborly-services.vercel.app",
-      "https://neighborly-services.onrender.com"
+      "https://neighborly-services.onrender.com",
+      "https://neighborly-services-git-main-skhaswin-3769s-projects.vercel.app",
+      /.+\.vercel\.app$/,
     ],
     credentials: true,
   })
