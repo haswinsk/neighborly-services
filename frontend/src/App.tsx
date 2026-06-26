@@ -4,7 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import HomePage from "./pages/HomePage";
+import AboutPage from "./pages/AboutPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import CustomerDashboard from "./pages/CustomerDashboard";
@@ -17,10 +20,13 @@ import ProviderBookingsPage from "./pages/ProviderBookingsPage";
 import ProviderEarningsPage from "./pages/ProviderEarningsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminProvidersPage from "./pages/AdminProvidersPage";
 import AdminBookingsPage from "./pages/AdminBookingsPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import ServerError from "./pages/ServerError";
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -29,7 +35,17 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-sm text-muted-foreground">Restoring session...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -61,14 +77,17 @@ const RoleRoute = ({
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <NotificationProvider>
+          <BrowserRouter>
+            <AuthProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/services" element={<ServiceListingPage />} />
@@ -154,6 +173,16 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/providers"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["admin"]}>
+                    <AdminProvidersPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/bookings"
               element={
                 <ProtectedRoute>
@@ -174,6 +203,16 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["admin"]}>
+                    <AdminReportsPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/profile"
               element={
                 <ProtectedRoute>
@@ -181,12 +220,15 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/500" element={<ServerError />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </NotificationProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

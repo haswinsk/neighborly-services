@@ -1,10 +1,9 @@
 export const API_BASE_URL = (() => {
-  const url = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api";
-  // Ensure URL ends with /api
-  if (!url.endsWith("/api")) {
-    return url.replace(/\/$/, "") + "/api";
-  }
-  return url.replace(/\/$/, "");
+  // In production (Vercel), VITE_API_URL must be set to the deployed backend URL.
+  // In development it falls back to localhost:5000.
+  const raw = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api";
+  const url = raw.replace(/\/$/, "");
+  return url.endsWith("/api") ? url : url + "/api";
 })();
 
 const buildHeaders = (headers?: HeadersInit) => {

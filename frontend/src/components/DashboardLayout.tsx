@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LucideIcon, Home, Search, Calendar, User, LayoutDashboard, Wrench, ClipboardList, DollarSign, Users, BookOpen, FolderOpen, LogOut } from "lucide-react";
+import { LucideIcon, Home, Search, Calendar, User, LayoutDashboard, Wrench, ClipboardList, DollarSign, Users, BookOpen, FolderOpen, LogOut, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NavItem {
@@ -26,7 +26,9 @@ const providerNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { label: "Manage Users", path: "/admin/users", icon: Users },
+  { label: "Providers", path: "/admin/providers", icon: Wrench },
   { label: "All Bookings", path: "/admin/bookings", icon: BookOpen },
+  { label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { label: "Categories", path: "/admin/categories", icon: FolderOpen },
 ];
 

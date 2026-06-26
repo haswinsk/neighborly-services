@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, Wrench, Zap, Droplets, Wind, Paintbrush, Sparkles, Bug, BookOpen, ArrowRight, Star, MapPin } from "lucide-react";
+import { Search, Wrench, Zap, Droplets, Wind, Paintbrush, Sparkles, Bug, BookOpen, ArrowRight, Star, MapPin, CheckCircle, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StarRating } from "@/components/StarRating";
+import { Header } from "@/components/Header";
 import { useEffect, useState } from "react";
 import { getServiceImage } from "@/data/serviceImages";
 import { Service } from "@/types";
@@ -40,29 +41,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Wrench className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">LocalServ</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <Link to={user?.role === "admin" ? "/admin" : user?.role === "provider" ? "/provider" : "/customer"}>
-                <Button>Dashboard</Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login"><Button variant="ghost">Sign In</Button></Link>
-                <Link to="/register"><Button>Get Started</Button></Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero */}
       <section className="border-b bg-card py-16 lg:py-24">
@@ -155,10 +134,92 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Why Choose Us */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground">Why Choose LocalServ</h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">The most trusted platform for finding verified professionals</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-lg shadow-soft card-hover">
+              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">Verified Professionals</h3>
+              <p className="text-sm text-muted-foreground">All professionals are background-checked and reviewed by our community</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-soft card-hover">
+              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <TrendingUp className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">Best Prices</h3>
+              <p className="text-sm text-muted-foreground">Competitive pricing with no hidden charges. Compare and book instantly</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-soft card-hover">
+              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">24/7 Support</h3>
+              <p className="text-sm text-muted-foreground">Customer support available round the clock for any assistance</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16">
+        <div className="container">
+          <div className="bg-gradient-to-r from-primary to-primary/80 rounded-lg p-12 text-center text-white">
+            <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+            <p className="text-white/90 mb-8 max-w-2xl mx-auto">Join thousands of satisfied customers who have found their perfect professional on LocalServ</p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link to="/services">
+                <Button size="lg" variant="secondary">Browse Services</Button>
+              </Link>
+              {!isAuthenticated && (
+                <Link to="/register">
+                  <Button size="lg" className="bg-white text-primary hover:bg-white/90">Create Account</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t bg-card py-8">
-        <div className="container text-center text-sm text-muted-foreground">
-          © 2026 LocalServ. All rights reserved.
+      <footer className="border-t bg-card py-12">
+        <div className="container">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">About LocalServ</h3>
+              <p className="text-sm text-muted-foreground">Connecting verified professionals with customers for trusted local services</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">For Customers</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/services" className="hover:text-foreground">Browse Services</Link></li>
+                <li><Link to="/services" className="hover:text-foreground">How it Works</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">For Professionals</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/register" className="hover:text-foreground">Register as Provider</Link></li>
+                <li><Link to="/register" className="hover:text-foreground">Earn More</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-foreground">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t pt-8 text-center text-sm text-muted-foreground">
+            © 2026 LocalServ. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>

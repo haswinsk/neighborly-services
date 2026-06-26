@@ -7,6 +7,12 @@ export interface User {
   role: UserRole;
   phone: string;
   location: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
   avatar?: string;
   approved?: boolean;
 }
@@ -19,10 +25,15 @@ export interface Service {
   providerId: string;
   providerName: string;
   providerLocation: string;
+  address?: string;
+  city?: string;
+  state?: string;
   category: string;
   rating: number;
   reviewCount: number;
   image?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type BookingStatus = "Requested" | "Accepted" | "In Progress" | "Completed" | "Rejected";

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { StarRating } from "@/components/StarRating";
+import { Header } from "@/components/Header";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { ProviderBadge } from "@/components/ProviderBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,8 +49,16 @@ const ServiceDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading service...</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin">
+              <Wrench className="h-8 w-8 text-primary" />
+            </div>
+            <p className="mt-4 text-muted-foreground">Loading service details...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -86,16 +97,7 @@ const ServiceDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Wrench className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold text-foreground">LocalServ</span>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <div className="container py-8">
         <Button variant="ghost" size="sm" className="mb-4 gap-1" onClick={() => navigate(-1)}>
@@ -104,18 +106,30 @@ const ServiceDetailsPage = () => {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-48 w-full rounded-lg object-cover lg:h-64" />
+            <div className="relative rounded-lg overflow-hidden">
+              <img src={getServiceImage(service.category)} alt={service.serviceName} className="h-48 w-full object-cover lg:h-64" />
+              <div className="absolute top-3 right-3">
+                <FavoriteButton serviceId={service.id} />
+              </div>
+            </div>
             <div className="mt-6">
-              <span className="text-sm font-medium text-primary">{service.category}</span>
-              <h1 className="mt-1 text-3xl font-bold text-foreground">{service.serviceName}</h1>
-              <p className="mt-1 text-muted-foreground">by {service.providerName}</p>
-              <div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <span className="text-sm font-medium text-primary">{service.category}</span>
+                  <h1 className="mt-1 text-3xl font-bold text-foreground">{service.serviceName}</h1>
+                  <p className="mt-1 text-muted-foreground">by {service.providerName}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span>{service.providerLocation}</span>
               </div>
-              <div className="mt-4 flex items-center gap-4">
-                <StarRating rating={service.rating} />
-                <span className="text-sm text-muted-foreground">({service.reviewCount} reviews)</span>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-4">
+                  <StarRating rating={service.rating} />
+                  <span className="text-sm text-muted-foreground">({service.reviewCount} reviews)</span>
+                </div>
+                <ProviderBadge rating={service.rating} reviewCount={service.reviewCount} />
               </div>
               <p className="mt-6 text-foreground leading-relaxed">{service.description}</p>
             </div>
@@ -141,26 +155,70 @@ const ServiceDetailsPage = () => {
 
           {/* Booking sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 rounded-lg border bg-card p-6 shadow-sm">
-              <div className="text-center">
-                <span className="text-3xl font-bold text-foreground">₹{service.price}</span>
-                <span className="text-muted-foreground"> / service</span>
+            <div className="sticky top-24 rounded-lg border bg-gradient-to-br from-white to-gray-50 p-6 shadow-elevated card-hover">
+              <div className="text-center mb-6">
+                <div className="inline-block bg-primary/10 px-3 py-1 rounded-full mb-3">
+                  <span className="text-xs font-semibold text-primary">PRICING</span>
+                </div>
+                <div>
+                  <span className="text-4xl font-bold text-foreground">₹{service.price}</span>
+                  <span className="text-sm text-muted-foreground"> / service</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <span className="text-muted-foreground">Verified Professional</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <span className="text-muted-foreground">Fast & Reliable</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <span className="text-muted-foreground">24/7 Support</span>
+                </div>
               </div>
 
               {!showBooking ? (
-                <Button className="mt-6 w-full" onClick={() => setShowBooking(true)}>
-                  <Calendar className="mr-2 h-4 w-4" /> Book Now
+                <Button 
+                  className="w-full h-11 gap-2 shadow-md hover:shadow-lg transition-smooth" 
+                  onClick={() => setShowBooking(true)}
+                >
+                  <Calendar className="h-4 w-4" /> 
+                  Book Now
                 </Button>
               ) : (
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                   <div>
-                    <Label>Select Date</Label>
-                    <Input type="date" className="mt-1" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
+                    <Label className="font-semibold">Select Date</Label>
+                    <Input 
+                      type="date" 
+                      className="mt-2 input-modern" 
+                      value={bookingDate} 
+                      onChange={(e) => setBookingDate(e.target.value)}
+                    />
                   </div>
-                  <Button className="w-full" onClick={handleBook}>Confirm Booking</Button>
-                  <Button variant="outline" className="w-full" onClick={() => setShowBooking(false)}>Cancel</Button>
+                  <Button 
+                    className="w-full h-11 shadow-md hover:shadow-lg transition-smooth" 
+                    onClick={handleBook}
+                  >
+                    Confirm Booking
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-11" 
+                    onClick={() => setShowBooking(false)}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               )}
+
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Your booking is secure and you can cancel anytime
+              </p>
             </div>
           </div>
         </div>
