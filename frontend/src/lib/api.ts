@@ -1,4 +1,11 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:5000/api";
+export const API_BASE_URL = (() => {
+  const url = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api";
+  // Ensure URL ends with /api
+  if (!url.endsWith("/api")) {
+    return url.replace(/\/$/, "") + "/api";
+  }
+  return url.replace(/\/$/, "");
+})();
 
 const buildHeaders = (headers?: HeadersInit) => {
   const token = localStorage.getItem("auth_token");

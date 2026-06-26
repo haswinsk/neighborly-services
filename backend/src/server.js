@@ -46,7 +46,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:8082",
-      "https://neighborly-services.vercel.app"
+      "https://neighborly-services.vercel.app",
+      "https://neighborly-services.onrender.com"
     ],
     credentials: true,
   })
