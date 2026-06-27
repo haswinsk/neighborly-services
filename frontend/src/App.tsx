@@ -17,6 +17,7 @@ import ServiceDetailsPage from "./pages/ServiceDetailsPage";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import ProviderServicesPage from "./pages/ProviderServicesPage";
 import ProviderBookingsPage from "./pages/ProviderBookingsPage";
+import ProviderCustomerMapPage from "./pages/ProviderCustomerMapPage";
 import ProviderEarningsPage from "./pages/ProviderEarningsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsersPage from "./pages/AdminUsersPage";
@@ -156,6 +157,16 @@ const App = () => (
                 <ProtectedRoute>
                   <RoleRoute allowedRoles={["provider"]}>
                     <ProviderBookingsPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/provider/customer-map"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["provider"]}>
+                    <ProviderCustomerMapPage />
                   </RoleRoute>
                 </ProtectedRoute>
               }
