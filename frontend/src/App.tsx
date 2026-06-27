@@ -90,8 +90,26 @@ const App = () => (
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/services" element={<ServiceListingPage />} />
-            <Route path="/services/:id" element={<ServiceDetailsPage />} />
+            <Route
+              path="/services"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["customer"]}>
+                    <ServiceListingPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services/:id"
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRoles={["customer"]}>
+                    <ServiceDetailsPage />
+                  </RoleRoute>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/customer"
               element={

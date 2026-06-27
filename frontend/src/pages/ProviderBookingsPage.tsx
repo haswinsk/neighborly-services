@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
 import { MiniMap, LocationBadge } from "@/components/MiniMap";
-import { MapPin, User, Calendar, IndianRupee, ClipboardList, RefreshCw, AlertCircle, Navigation } from "lucide-react";
+import { ProviderCustomerMap } from "@/components/ProviderCustomerMap";
+import { calculateDistance } from "@/lib/distance";
+import { MapPin, User, Calendar, IndianRupee, ClipboardList, RefreshCw, AlertCircle, Navigation, MapIcon } from "lucide-react";
 
 function BookingSkeleton() {
   return (
@@ -34,25 +36,29 @@ const ProviderBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [providerLocation, setProviderLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const { toast } = useToast();
 
-  const handleSeeLocation = (booking: Booking) => {
-    if (booking.customerLatitude && booking.customerLongitude) {
-      // Store customer location in sessionStorage to show nearby services on the map
-      sessionStorage.setItem(
-        "focusLocation",
-        JSON.stringify({
-          latitude: booking.customerLatitude,
-          longitude: booking.customerLongitude,
-          customerName: booking.customerName,
-          bookingId: booking.id,
-          showNearbyServices: true,
-          searchRadius: 5, // Show services within 5km
-        })
-      );
-      navigate("/services");
-    }
-  };
+  // Get provider location and prepare customer pins
+  const customerPins = useMemo(() => {
+    return bookings
+      .filter((b) => b.customerLatitude && b.customerLongitude)
+      .map((b) => ({
+        latitude: b.customerLatitude!,
+        longitude: b.customerLongitude!,
+        customerName: b.customerName,
+        bookingId: b.id,
+        serviceName: b.serviceName,
+        distance: providerLocation
+          ? calculateDistance(providerLocation, {
+              latitude: b.customerLatitude!,
+              longitude: b.customerLongitude!,
+            })
+          : undefined,
+      }));
+  }, [bookings, providerLocation]);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -60,6 +66,15 @@ const ProviderBookingsPage = () => {
     try {
       const res = await apiRequest<{ bookings: Booking[] }>("/bookings");
       setBookings(res.bookings);
+
+      // Also fetch provider location
+      const userRes = await apiRequest<{ user: any }>("/auth/me");
+      if (userRes.user?.latitude && userRes.user?.longitude) {
+        setProviderLocation({
+          latitude: userRes.user.latitude,
+          longitude: userRes.user.longitude,
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not load bookings";
       setError(message);
@@ -205,10 +220,13 @@ const ProviderBookingsPage = () => {
                           size="sm"
                           variant="ghost"
                           className="h-auto p-1.5 text-xs gap-1.5"
-                          onClick={() => handleSeeLocation(b)}
+                          onClick={() => {
+                            setSelectedBookingId(b.id);
+                            setShowMap(true);
+                          }}
                         >
-                          <Navigation className="w-3.5 h-3.5" />
-                          See Location
+                          <MapIcon className="w-3.5 h-3.5" />
+                          View on Map
                         </Button>
                       )}
                     </div>
@@ -258,6 +276,34 @@ const ProviderBookingsPage = () => {
           );
         })}
       </div>
+
+      {/* Customer Locations Map */}
+      {showMap && customerPins.length > 0 && (
+        <div className="mt-8 border-t pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Customer Locations Map</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                View all customer locations {selectedBookingId ? "with selected booking highlighted" : ""}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMap(false)}
+            >
+              Close Map
+            </Button>
+          </div>
+          <div className="h-[500px] w-full rounded-lg border overflow-hidden shadow-sm">
+            <ProviderCustomerMap
+              customerPins={customerPins}
+              providerLocation={providerLocation || undefined}
+              selectedBooking={selectedBookingId || undefined}
+            />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
