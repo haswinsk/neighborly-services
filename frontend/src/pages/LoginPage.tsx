@@ -110,13 +110,6 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {/* Demo Credentials Info */}
-          <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700 font-medium mb-1">Demo Credentials:</p>
-            <p className="text-xs text-blue-600">john@example.com, mike@example.com, admin@example.com</p>
-            <p className="text-xs text-blue-600">Password: password123</p>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
