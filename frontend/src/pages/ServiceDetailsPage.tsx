@@ -31,21 +31,35 @@ const ServiceDetailsPage = () => {
 
       setIsLoading(true);
       try {
+        // Load service data
         const serviceResponse = await apiRequest<{ service: Service }>(`/services/${id}`);
         setService(serviceResponse.service);
 
-        const reviewsResponse = await apiRequest<{ reviews: Review[] }>(`/reviews/provider/${serviceResponse.service.providerId}`);
-        setReviews(reviewsResponse.reviews);
-      } catch {
+        // Load reviews separately so they don't block service display
+        try {
+          const reviewsResponse = await apiRequest<{ reviews: Review[] }>(`/reviews/provider/${serviceResponse.service.providerId}`);
+          setReviews(reviewsResponse.reviews);
+        } catch (reviewError) {
+          console.log("[v0] Error loading reviews:", reviewError);
+          // Reviews failing shouldn't block service display
+          setReviews([]);
+        }
+      } catch (error) {
+        console.log("[v0] Error loading service details:", error);
         setService(null);
         setReviews([]);
+        toast({
+          title: "Error",
+          description: "Failed to load service details. Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [id]);
+  }, [id, toast]);
 
   if (isLoading) {
     return (
@@ -65,8 +79,16 @@ const ServiceDetailsPage = () => {
 
   if (!service) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Service not found.</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">Service not found.</p>
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Go Back
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
