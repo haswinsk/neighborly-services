@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
-import { Coordinates } from '@/lib/geolocation';
+import { Coordinates, DEFAULT_COORDINATES as DEFAULT_LOCATION } from '@/lib/geolocation';
 import { calculateDistance, formatDistance } from '@/lib/distance';
 import {
   createCategoryMarker,
@@ -139,8 +139,14 @@ function FitBounds({
   const prevKeyRef = useRef('');
 
   useEffect(() => {
+    // Validate user coordinates
+    if (!Number.isFinite(userCoords.latitude) || !Number.isFinite(userCoords.longitude)) {
+      console.log("[v0] Invalid user coordinates in FitBounds:", userCoords);
+      return;
+    }
+
     const ids = services
-      .filter((s) => s.latitude && s.longitude)
+      .filter((s) => s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude))
       .map((s) => s.id)
       .sort()
       .join(',');
@@ -151,11 +157,13 @@ function FitBounds({
     const positions: [number, number][] = [
       [userCoords.latitude, userCoords.longitude],
     ];
-    if (customerCoords) {
+    if (customerCoords && Number.isFinite(customerCoords.latitude) && Number.isFinite(customerCoords.longitude)) {
       positions.push([customerCoords.latitude, customerCoords.longitude]);
     }
     services.forEach((s) => {
-      if (s.latitude && s.longitude) positions.push([s.latitude, s.longitude]);
+      if (s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude)) {
+        positions.push([s.latitude, s.longitude]);
+      }
     });
 
     if (positions.length > 1) {
@@ -165,7 +173,7 @@ function FitBounds({
         padding: [50, 50],
         maxZoom: 15,
       });
-    } else {
+    } else if (positions.length === 1) {
       // Single location - zoom to street level
       map.setView([userCoords.latitude, userCoords.longitude], 14, {
         animate: true,
@@ -328,10 +336,17 @@ export function ServiceMap({
   onMarkerClick,
   onBookNow,
 }: ServiceMapProps) {
+  // Validate that userCoordinates are valid before rendering map
+  const validCenter: [number, number] = (
+    Number.isFinite(userCoordinates.latitude) && Number.isFinite(userCoordinates.longitude)
+      ? [userCoordinates.latitude, userCoordinates.longitude]
+      : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude]
+  );
+
   return (
     <div className="h-full w-full relative">
       <MapContainer
-        center={[userCoordinates.latitude, userCoordinates.longitude]}
+        center={validCenter}
         zoom={14}
         className="h-full w-full"
         style={{ zIndex: 0 }}
