@@ -95,11 +95,21 @@ function FocusMarker({
 
     console.log('[v0] FocusMarker flying to:', [service.latitude, service.longitude]);
 
-    // Smooth pan and zoom to selected marker
-    map.flyTo([service.latitude, service.longitude], 16, {
-      duration: 1.5,
-      easeLinearity: 0.25,
-    });
+    try {
+      // Smooth pan and zoom to selected marker
+      map.flyTo([service.latitude, service.longitude], 16, {
+        duration: 1.5,
+        easeLinearity: 0.25,
+      });
+    } catch (err) {
+      console.log('[v0] FocusMarker flyTo error:', err);
+      // Fallback to setView if flyTo fails
+      try {
+        map.setView([service.latitude, service.longitude], 16);
+      } catch (fallbackErr) {
+        console.log('[v0] FocusMarker setView fallback error:', fallbackErr);
+      }
+    }
   }, [selectedService, services, map]);
 
   return null;
@@ -136,19 +146,29 @@ function RoutingLine({
 }
 
 // ── Re-fit bounds whenever the visible service set changes ──────────────────
+// Note: This is skipped if a service is selected (FocusMarker will handle positioning)
 function FitBounds({
   userCoords,
   services,
   customerCoords,
+  selectedService,
 }: {
   userCoords: Coordinates;
   services: ServiceMapService[];
   customerCoords?: Coordinates | null;
+  selectedService?: string;
 }) {
   const map = useMap();
   const prevKeyRef = useRef('');
+  const fitTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
+    // Don't run FitBounds if a service is selected - let FocusMarker handle it
+    if (selectedService) {
+      console.log('[v0] FitBounds skipped - selectedService:', selectedService);
+      return;
+    }
+
     console.log('[v0] FitBounds effect:', { userCoords, servicesCount: services.length, customerCoords });
 
     // Validate user coordinates
@@ -168,32 +188,51 @@ function FitBounds({
     if (key === prevKeyRef.current) return;
     prevKeyRef.current = key;
 
-    const positions: [number, number][] = [
-      [userCoords.latitude, userCoords.longitude],
-    ];
-    if (customerCoords && Number.isFinite(customerCoords.latitude) && Number.isFinite(customerCoords.longitude)) {
-      positions.push([customerCoords.latitude, customerCoords.longitude]);
+    // Debounce FitBounds to prevent rapid re-renders
+    if (fitTimeoutRef.current) {
+      clearTimeout(fitTimeoutRef.current);
     }
-    services.forEach((s) => {
-      if (s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude)) {
-        positions.push([s.latitude, s.longitude]);
-      }
-    });
 
-    if (positions.length > 1) {
-      // Show all markers with natural zoom calculation
-      map.fitBounds(L.latLngBounds(positions), {
-        animate: true,
-        padding: [50, 50],
-        maxZoom: 15,
+    fitTimeoutRef.current = setTimeout(() => {
+      const positions: [number, number][] = [
+        [userCoords.latitude, userCoords.longitude],
+      ];
+      if (customerCoords && Number.isFinite(customerCoords.latitude) && Number.isFinite(customerCoords.longitude)) {
+        positions.push([customerCoords.latitude, customerCoords.longitude]);
+      }
+      services.forEach((s) => {
+        if (s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude)) {
+          positions.push([s.latitude, s.longitude]);
+        }
       });
-    } else if (positions.length === 1) {
-      // Single location - zoom to street level
-      map.setView([userCoords.latitude, userCoords.longitude], 14, {
-        animate: true,
-      });
-    }
-  }, [userCoords, services, customerCoords, map]);
+
+      if (positions.length > 1) {
+        // Show all markers with natural zoom calculation
+        try {
+          map.fitBounds(L.latLngBounds(positions), {
+            animate: true,
+            padding: [50, 50],
+            maxZoom: 15,
+          });
+        } catch (err) {
+          console.log('[v0] FitBounds error:', err);
+        }
+      } else if (positions.length === 1) {
+        // Single location - zoom to street level
+        try {
+          map.setView([userCoords.latitude, userCoords.longitude], 14, {
+            animate: true,
+          });
+        } catch (err) {
+          console.log('[v0] FitBounds setView error:', err);
+        }
+      }
+    }, 100);
+
+    return () => {
+      if (fitTimeoutRef.current) clearTimeout(fitTimeoutRef.current);
+    };
+  }, [userCoords, services, customerCoords, map, selectedService]);
 
   return null;
 }
@@ -392,6 +431,7 @@ export function ServiceMap({
           userCoords={userCoordinates}
           services={services}
           customerCoords={customerCoordinates}
+          selectedService={selectedService}
         />
 
         {/* Focus on selected provider with smooth animation */}
