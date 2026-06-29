@@ -61,7 +61,7 @@ export function ProviderCustomerMap({
     });
 
     // Add provider location marker if available
-    if (providerLocation) {
+    if (providerLocation && Number.isFinite(providerLocation.latitude) && Number.isFinite(providerLocation.longitude)) {
       const providerIcon = L.icon({
         iconUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%233B82F6' stroke='white' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3C/svg%3E",
         iconSize: [24, 24],
@@ -77,6 +77,11 @@ export function ProviderCustomerMap({
 
     // Add customer location markers
     customerPins.forEach((pin) => {
+      // Validate customer coordinates
+      if (!Number.isFinite(pin.latitude) || !Number.isFinite(pin.longitude)) {
+        console.log("[v0] Skipping invalid customer coordinates:", pin);
+        return;
+      }
       const isSelected = selectedBooking === pin.bookingId;
       const customerIcon = L.icon({
         iconUrl: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='%23${isSelected ? '10B981' : 'EF4444'}' stroke='white' stroke-width='2'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z'/%3E%3C/svg%3E`,

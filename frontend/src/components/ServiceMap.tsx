@@ -47,6 +47,12 @@ function FocusLocationMarker({
   useEffect(() => {
     if (!focusLocation) return;
 
+    // Validate coordinates before flying to prevent NaN errors
+    if (!Number.isFinite(focusLocation.latitude) || !Number.isFinite(focusLocation.longitude)) {
+      console.log("[v0] Invalid focus location coordinates:", focusLocation);
+      return;
+    }
+
     // Fly to customer location
     map.flyTo([focusLocation.latitude, focusLocation.longitude], 16, {
       duration: 1.5,
@@ -72,6 +78,12 @@ function FocusMarker({
 
     const service = services.find((s) => s.id === selectedService);
     if (!service || !service.latitude || !service.longitude) return;
+
+    // Validate coordinates before flying to prevent NaN errors
+    if (!Number.isFinite(service.latitude) || !Number.isFinite(service.longitude)) {
+      console.log("[v0] Invalid service coordinates:", service);
+      return;
+    }
 
     // Smooth pan and zoom to selected marker
     map.flyTo([service.latitude, service.longitude], 16, {
