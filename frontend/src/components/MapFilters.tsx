@@ -177,7 +177,10 @@ export function MapFilters({
             return (
               <button
                 key={service.id}
-                onClick={() => onServiceSelect(service.id)}
+                onClick={() => {
+                  console.log('[v0] Service selected in MapFilters:', service.id, service);
+                  onServiceSelect(service.id);
+                }}
                 className={`w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-50 transition-all ${
                   isSelected
                     ? 'bg-blue-50 border-l-4 border-l-blue-500'

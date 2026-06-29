@@ -20,34 +20,25 @@ export interface GeolocationState {
 
 export const useGeolocation = (): GeolocationState => {
   const [state, setState] = useState<GeolocationState>({
-    coordinates: null,
+    coordinates: DEFAULT_COORDINATES,
     loading: true,
     error: null,
   });
 
   useEffect(() => {
     if (!navigator.geolocation) {
+      console.log('[v0] Geolocation not supported, using default location');
       setState({
         coordinates: DEFAULT_COORDINATES,
         loading: false,
         error: 'Geolocation not supported',
       });
-      toast.error('Geolocation not supported. Using default location.');
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setState({
-        coordinates: DEFAULT_COORDINATES,
-        loading: false,
-        error: 'Geolocation timeout',
-      });
-      toast.error('Location detection timed out.');
-    }, 15000);
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        clearTimeout(timeout);
+        console.log('[v0] Geolocation success:', position.coords);
         setState({
           coordinates: {
             latitude: position.coords.latitude,
@@ -58,7 +49,7 @@ export const useGeolocation = (): GeolocationState => {
         });
       },
       (error) => {
-        clearTimeout(timeout);
+        console.log('[v0] Geolocation error:', error.code, error.message);
         let errorMessage = 'Permission denied';
 
         if (error.code === error.PERMISSION_DENIED) {
@@ -69,27 +60,23 @@ export const useGeolocation = (): GeolocationState => {
           errorMessage = 'Location request timeout';
         }
 
-        // Don't use default location immediately — wait for user action
+        // Always fall back to default location on error
         setState({
-          coordinates: null,
+          coordinates: DEFAULT_COORDINATES,
           loading: false,
           error: errorMessage,
         });
 
         if (error.code === error.PERMISSION_DENIED) {
-          toast.info('Enable location permission to see nearby services');
-        } else {
-          toast.error(`Location error: ${errorMessage}`);
+          toast.info('Using default location - enable permission for nearby services');
         }
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
+        enableHighAccuracy: false,
+        timeout: 8000,
         maximumAge: 0,
       }
     );
-
-    return () => clearTimeout(timeout);
   }, []);
 
   return state;

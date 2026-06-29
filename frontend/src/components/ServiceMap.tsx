@@ -74,16 +74,26 @@ function FocusMarker({
   const map = useMap();
 
   useEffect(() => {
-    if (!selectedService) return;
+    if (!selectedService) {
+      console.log('[v0] FocusMarker: no selectedService');
+      return;
+    }
 
     const service = services.find((s) => s.id === selectedService);
-    if (!service || !service.latitude || !service.longitude) return;
+    console.log('[v0] FocusMarker looking for service:', selectedService, 'found:', service);
+
+    if (!service || !service.latitude || !service.longitude) {
+      console.log('[v0] FocusMarker: service missing or no coordinates');
+      return;
+    }
 
     // Validate coordinates before flying to prevent NaN errors
     if (!Number.isFinite(service.latitude) || !Number.isFinite(service.longitude)) {
       console.log("[v0] Invalid service coordinates:", service);
       return;
     }
+
+    console.log('[v0] FocusMarker flying to:', [service.latitude, service.longitude]);
 
     // Smooth pan and zoom to selected marker
     map.flyTo([service.latitude, service.longitude], 16, {
@@ -139,11 +149,15 @@ function FitBounds({
   const prevKeyRef = useRef('');
 
   useEffect(() => {
+    console.log('[v0] FitBounds effect:', { userCoords, servicesCount: services.length, customerCoords });
+
     // Validate user coordinates
     if (!Number.isFinite(userCoords.latitude) || !Number.isFinite(userCoords.longitude)) {
       console.log("[v0] Invalid user coordinates in FitBounds:", userCoords);
       return;
     }
+    
+    console.log('[v0] User coordinates valid:', userCoords);
 
     const ids = services
       .filter((s) => s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude))
@@ -337,11 +351,20 @@ export function ServiceMap({
   onBookNow,
 }: ServiceMapProps) {
   // Validate that userCoordinates are valid before rendering map
+  console.log('[v0] ServiceMap rendering with:', {
+    userCoordinates,
+    selectedService,
+    servicesCount: services.length,
+    focusLocation,
+  });
+
   const validCenter: [number, number] = (
     Number.isFinite(userCoordinates.latitude) && Number.isFinite(userCoordinates.longitude)
       ? [userCoordinates.latitude, userCoordinates.longitude]
       : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude]
   );
+
+  console.log('[v0] Map center:', validCenter);
 
   return (
     <div className="h-full w-full relative">

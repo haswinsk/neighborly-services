@@ -67,8 +67,9 @@ const ServiceListingPage = () => {
   }, [services, selectedCategory, selectedDistance, searchQuery, coordinates, focusLocation]);
 
   const handleServiceSelect = useCallback((serviceId: string) => {
+    console.log('[v0] handleServiceSelect called with:', serviceId, 'displayCoordinates:', displayCoordinates);
     setSelectedService(serviceId);
-  }, []);
+  }, [displayCoordinates]);
 
   const handleBookNow = useCallback((serviceId: string) => {
     navigate(`/services/${serviceId}`);
@@ -85,7 +86,8 @@ const ServiceListingPage = () => {
         
         // If showNearbyServices flag is set, also set distance filter to show nearby services
         if (showNearbyServices && searchRadius) {
-          setSelectedDistance(`${searchRadius}km`);
+          console.log('[v0] Setting distance filter to:', searchRadius);
+          setSelectedDistance(searchRadius); // searchRadius should be a number, not string
         }
         
         sessionStorage.removeItem("focusLocation");
