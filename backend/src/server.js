@@ -71,6 +71,16 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+// Ensure preflight OPTIONS requests are handled and receive CORS headers
+app.options("*", cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (/^https:\/\/neighborly-services(-[a-z0-9]+)*\.vercel\.app$/.test(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: "100kb" }));
 app.use(morgan("dev"));
 app.use("/api", apiLimiter);
