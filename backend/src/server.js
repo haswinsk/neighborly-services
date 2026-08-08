@@ -47,7 +47,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:8081",
   "http://localhost:8082",
   "https://neighborly-services.vercel.app",
-  "https://neighborly-services.onrender.com",
+  "const API_URL = import.meta.env.VITE_API_URL;",
 ];
 
 app.use(
