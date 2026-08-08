@@ -60,6 +60,10 @@ app.use(
       if (ALLOWED_ORIGINS.includes(origin)) {
         return callback(null, true);
       }
+      // Allow all Vercel deployments for neighborly-services (production and previews)
+      if (/^https:\/\/neighborly-services(-[a-z0-9]+)*\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
       return callback(new Error(`CORS: origin not allowed — ${origin}`));
     },
     credentials: true,
