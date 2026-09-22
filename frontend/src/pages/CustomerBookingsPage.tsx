@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Booking } from "@/types";
@@ -6,7 +7,8 @@ import { apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { MiniMap, LocationBadge } from "@/components/MiniMap";
-import { MapPin, Phone, Mail, Calendar, IndianRupee, Inbox, RefreshCw, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { MapPin, Phone, Mail, Calendar, IndianRupee, Inbox, RefreshCw, AlertCircle, CheckCircle2, Clock, XCircle, ArrowRight, Eye } from "lucide-react";
+import { formatPrice, isRoadsideCategory } from "@/components/customer/CustomerUI";
 
 function BookingSkeleton() {
   return (
@@ -35,9 +37,11 @@ function StatusIcon({ status }: { status: Booking["status"] }) {
 }
 
 const CustomerBookingsPage = () => {
+  const navigate = useNavigate();
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "requested" | "confirmed" | "in-progress" | "completed" | "cancelled">("all");
   const { toast } = useToast();
 
   const loadBookings = useCallback(async () => {
@@ -89,6 +93,17 @@ const CustomerBookingsPage = () => {
 
   const active = myBookings.filter((b) => b.status !== "Completed" && b.status !== "Rejected").length;
   const completed = myBookings.filter((b) => b.status === "Completed").length;
+  const cancelled = myBookings.filter((b) => b.status === "Rejected").length;
+
+  const filteredBookings = myBookings.filter((b) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "requested") return b.status === "Requested";
+    if (activeTab === "confirmed") return b.status === "Accepted";
+    if (activeTab === "in-progress") return b.status === "In Progress" || b.status === "CompletionRequested";
+    if (activeTab === "completed") return b.status === "Completed";
+    if (activeTab === "cancelled") return b.status === "Rejected";
+    return true;
+  });
 
   return (
     <DashboardLayout>
@@ -105,19 +120,49 @@ const CustomerBookingsPage = () => {
 
       {/* Stats strip */}
       {!loading && !error && myBookings.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-lg border bg-card p-3 text-center">
             <p className="text-2xl font-bold text-foreground">{myBookings.length}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Total</p>
           </div>
-          <div className="rounded-lg border bg-blue-50 border-blue-200 p-3 text-center">
-            <p className="text-2xl font-bold text-blue-700">{active}</p>
-            <p className="text-xs text-blue-600 mt-0.5">Active</p>
+          <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 p-3 text-center">
+            <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{active}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">Active</p>
           </div>
-          <div className="rounded-lg border bg-green-50 border-green-200 p-3 text-center">
-            <p className="text-2xl font-bold text-green-700">{completed}</p>
-            <p className="text-xs text-green-600 mt-0.5">Completed</p>
+          <div className="rounded-lg border bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 p-3 text-center">
+            <p className="text-2xl font-bold text-green-700 dark:text-green-400">{completed}</p>
+            <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">Completed</p>
           </div>
+          <div className="rounded-lg border bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 p-3 text-center">
+            <p className="text-2xl font-bold text-red-700 dark:text-red-400">{cancelled}</p>
+            <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">Cancelled</p>
+          </div>
+        </div>
+      )}
+
+      {/* Tabs */}
+      {!loading && !error && myBookings.length > 0 && (
+        <div className="mt-6 flex gap-2 overflow-x-auto border-b border-border pb-px">
+          {[
+            { id: "all" as const, label: "All", count: myBookings.length },
+            { id: "requested" as const, label: "Requested", count: myBookings.filter((b) => b.status === "Requested").length },
+            { id: "confirmed" as const, label: "Confirmed", count: myBookings.filter((b) => b.status === "Accepted").length },
+            { id: "in-progress" as const, label: "In Progress", count: myBookings.filter((b) => b.status === "In Progress" || b.status === "CompletionRequested").length },
+            { id: "completed" as const, label: "Completed", count: completed },
+            { id: "cancelled" as const, label: "Cancelled", count: cancelled },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
         </div>
       )}
 
@@ -133,10 +178,10 @@ const CustomerBookingsPage = () => {
 
         {/* Error state */}
         {!loading && error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 flex items-start gap-3">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-red-800">Failed to load bookings</p>
+              <p className="font-semibold text-red-800 dark:text-red-200">Failed to load bookings</p>
               <p className="text-sm text-red-600 mt-1">{error}</p>
               <Button size="sm" variant="outline" className="mt-3" onClick={loadBookings}>
                 Try Again
@@ -159,11 +204,12 @@ const CustomerBookingsPage = () => {
         )}
 
         {/* Booking cards */}
-        {!loading && !error && myBookings.map((b) => {
+        {!loading && !error && filteredBookings.map((b) => {
           const hasProviderCoords = !!(b.providerLatitude && b.providerLongitude);
+          const isActive = b.status !== "Completed" && b.status !== "Rejected";
 
           return (
-            <div key={b.id} className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={b.id} className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${isRoadsideCategory(b.serviceName) && isActive ? "border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20" : "bg-card"}`}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 {/* Booking Info */}
                 <div className="flex-1 space-y-3 min-w-0">
@@ -185,7 +231,7 @@ const CustomerBookingsPage = () => {
                     </span>
                     <span className="flex items-center gap-1.5 font-semibold text-foreground">
                       <IndianRupee className="w-3.5 h-3.5" />
-                      {b.price}
+                      {formatPrice(b.price)}
                     </span>
                   </div>
 
@@ -215,25 +261,25 @@ const CustomerBookingsPage = () => {
                   {/* Contact details — unlocked after payment */}
                   {b.paymentStatus === "Completed" &&
                     (b.providerPhone || b.providerEmail || b.providerLocation) && (
-                      <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-1.5">
-                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
+                      <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 p-3 space-y-1.5">
+                        <p className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">
                           Provider Contact Details
                         </p>
                         {b.providerPhone && (
-                          <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <p className="flex items-center gap-2 text-sm text-foreground">
+                            <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             {b.providerPhone}
                           </p>
                         )}
                         {b.providerEmail && (
-                          <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <p className="flex items-center gap-2 text-sm text-foreground">
+                            <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             {b.providerEmail}
                           </p>
                         )}
                         {b.providerLocation && (
-                          <p className="flex items-center gap-2 text-sm text-gray-700">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <p className="flex items-center gap-2 text-sm text-foreground">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             {b.providerLocation}
                           </p>
                         )}
@@ -243,6 +289,29 @@ const CustomerBookingsPage = () => {
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end shrink-0">
+                  {/* Track button for active roadside services */}
+                  {isRoadsideCategory(b.serviceName) && isActive && (
+                    <Button 
+                      size="sm" 
+                      className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
+                      onClick={() => navigate(`/customer/bookings/${b.id}`)}
+                    >
+                      <Eye className="w-4 h-4" />
+                      Track
+                    </Button>
+                  )}
+                  
+                  {/* View Details button for all bookings */}
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => navigate(`/customer/bookings/${b.id}`)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Details
+                  </Button>
+
                   {(b.status === "Accepted" || b.status === "In Progress") && (
                     <Button size="sm" variant="outline" onClick={() => confirmCompletion(b.id)}>
                       Confirm Completed

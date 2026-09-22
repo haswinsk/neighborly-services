@@ -1,8 +1,8 @@
 export const API_BASE_URL = (() => {
-  // In development: use relative /api path (proxied via Vite to localhost:5000)
-  // In production: VITE_API_URL env var points to deployed backend, or default to relative /api
+  // In development: use direct localhost:5000 to bypass Vite proxy issues
+  // In production: VITE_API_URL env var points to deployed backend
   if (import.meta.env.DEV) {
-    return "/api";
+    return "http://localhost:5000/api";
   }
   const raw = (import.meta.env.VITE_API_URL as string | undefined) || "/api";
   const url = raw.replace(/\/$/, "");

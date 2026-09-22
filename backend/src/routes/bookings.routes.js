@@ -8,6 +8,7 @@ import { ApiError } from "../utils/apiError.js";
 import { assertEnum, assertRequiredString } from "../middleware/validation.js";
 import { BOOKING_STATUSES, PAYMENT_STATUSES } from "../constants/index.js";
 import { env } from "../config/env.js";
+import { createNotification } from "./notifications.routes.js";
 
 const router = express.Router();
 
@@ -90,9 +91,12 @@ router.post(
       throw new ApiError(404, "Service not found");
     }
 
-    const provider = await prisma.user.findUnique({ where: { id: service.providerId, role: "provider" }, select: { approved: true } });
+    const provider = await prisma.user.findUnique({ where: { id: service.providerId, role: "provider" }, select: { approved: true, isAvailable: true } });
     if (!provider || provider.approved !== true) {
       throw new ApiError(400, "Service provider is not approved");
+    }
+    if (provider.isAvailable === false) {
+      throw new ApiError(400, "Service provider is currently offline");
     }
 
     const customer = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -112,6 +116,14 @@ router.post(
         price: service.price,
       },
     });
+
+    // Notify provider of new booking request
+    await createNotification(
+      service.providerId,
+      "New Booking Request",
+      `${req.user.name} has requested ${service.serviceName} for ${normalizedBookingDate}`,
+      { type: "info", link: `/provider/requests/${booking.id}` }
+    );
 
     return res.status(201).json({ booking: sanitizeDoc(booking) });
   })
@@ -144,8 +156,10 @@ router.patch("/:id/status", requireAuth, asyncHandler(async (req, res) => {
     // Provider status transition validation
     const validTransitions = {
       "Requested": ["Accepted", "Rejected"],
-      "Accepted": ["In Progress"],
-      "In Progress": ["CompletionRequested"],
+      "Accepted": ["On The Way", "In Progress"],
+      "On The Way": ["Arrived", "In Progress"],
+      "Arrived": ["In Progress"],
+      "In Progress": ["CompletionRequested", "Completed"],
       "CompletionRequested": [],
       "Completed": [],
       "Rejected": [],
@@ -162,6 +176,25 @@ router.patch("/:id/status", requireAuth, asyncHandler(async (req, res) => {
   }
 
   const updatedBooking = await prisma.booking.update({ where: { id: req.params.id }, data: { status } });
+
+  // Create notifications on status changes
+  if (req.user.role === "provider") {
+    const notificationMessages = {
+      "Accepted": { title: "Booking Accepted", message: `${booking.providerName} accepted your booking for ${booking.serviceName}`, type: "success" },
+      "Rejected": { title: "Booking Rejected", message: `${booking.providerName} rejected your booking request`, type: "warning" },
+      "On The Way": { title: "Provider On The Way", message: `${booking.providerName} is on the way`, type: "info" },
+      "Arrived": { title: "Provider Arrived", message: `${booking.providerName} has arrived`, type: "success" },
+      "In Progress": { title: "Service In Progress", message: `${booking.providerName} has started working on ${booking.serviceName}`, type: "info" },
+      "CompletionRequested": { title: "Completion Requested", message: `${booking.providerName} has marked the job as complete. Please review and confirm.`, type: "info" },
+    };
+    const notif = notificationMessages[status];
+    if (notif) {
+      await createNotification(booking.customerId, notif.title, notif.message, { type: notif.type, link: `/customer/bookings/${booking.id}` });
+    }
+  } else if (req.user.role === "customer" && status === "Completed") {
+    await createNotification(booking.providerId, "Booking Completed", `${booking.customerName} confirmed completion of ${booking.serviceName}`, { type: "success", link: `/provider/bookings` });
+  }
+
   return res.json({ booking: sanitizeDoc(updatedBooking) });
 }));
 
@@ -190,6 +223,14 @@ router.patch("/:id/payment-status", requireAuth, requireRole("customer"), asyncH
       status: "Completed",
     },
   });
+
+  await createNotification(
+    booking.providerId,
+    "Payment Received",
+    `Payment confirmed for ${booking.serviceName}. Net earnings will reflect after admin commission.`,
+    { type: "success", link: `/provider/earnings` }
+  );
+
   const provider = await prisma.user.findUnique({ where: { id: booking.providerId, role: "provider" }, select: { phone: true, email: true, location: true } });
   return res.json({
     booking: {

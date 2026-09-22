@@ -22,6 +22,14 @@ router.patch("/:id/approve", requireAuth, requireRole("admin"), asyncHandler(asy
   return res.json({ user: sanitizeUser(updatedUser) });
 }));
 
+router.patch("/:id/suspend", requireAuth, requireRole("admin"), asyncHandler(async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) throw new ApiError(404, "User not found");
+
+  const updatedUser = await prisma.user.update({ where: { id: req.params.id }, data: { approved: false } });
+  return res.json({ user: sanitizeUser(updatedUser) });
+}));
+
 router.delete("/:id", requireAuth, requireRole("admin"), asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) throw new ApiError(404, "User not found");
@@ -120,7 +128,7 @@ router.patch("/:id", requireAuth, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Forbidden");
   }
 
-  const { name, phone, location, address, city, state, country } = req.body;
+  const { name, phone, location, address, city, state, country, bio, experience, serviceRadiusKm, isAvailable } = req.body;
   const updateData = {};
 
   if (name !== undefined) updateData.name = name || req.user.name;
@@ -129,6 +137,10 @@ router.patch("/:id", requireAuth, asyncHandler(async (req, res) => {
   if (city !== undefined) updateData.city = city || "";
   if (state !== undefined) updateData.state = state || "";
   if (country !== undefined) updateData.country = country || "India";
+  if (bio !== undefined) updateData.bio = bio || "";
+  if (experience !== undefined) updateData.experience = experience || "";
+  if (serviceRadiusKm !== undefined) updateData.serviceRadiusKm = assertNumber(Number(serviceRadiusKm), "Service radius", { min: 1, max: 100 });
+  if (isAvailable !== undefined && req.user.role === "provider") updateData.isAvailable = Boolean(isAvailable);
 
   // Check phone uniqueness if updating phone
   if (phone !== undefined && phone) {
@@ -143,6 +155,19 @@ router.patch("/:id", requireAuth, asyncHandler(async (req, res) => {
   }
 
   const updatedUser = await prisma.user.update({ where: { id: req.params.id }, data: updateData });
+  return res.json({ user: sanitizeUser(updatedUser) });
+}));
+
+router.patch("/:id/availability", requireAuth, requireRole("provider"), asyncHandler(async (req, res) => {
+  if (req.params.id !== req.user.id) {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { isAvailable: Boolean(req.body.isAvailable) },
+  });
+
   return res.json({ user: sanitizeUser(updatedUser) });
 }));
 

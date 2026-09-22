@@ -8,7 +8,7 @@ const ServerError = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-800 px-4">
       <div className="text-center max-w-md">
         <div className="mb-8">
           <div className="inline-block">
@@ -40,10 +40,10 @@ const ServerError = () => {
           </Link>
         </div>
         
-        <div className="mt-12 p-6 bg-white rounded-lg border border-gray-200">
+        <div className="mt-12 p-6 bg-card rounded-lg border border-border">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Error ID:</span><br />
-            <code className="text-xs text-gray-600">ERR_{Date.now()}</code><br />
+            <code className="text-xs text-muted-foreground">ERR_{Date.now()}</code><br />
             <span className="text-xs mt-2 block">If the problem persists, please contact our support team</span>
           </p>
         </div>

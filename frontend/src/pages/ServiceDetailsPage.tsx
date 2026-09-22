@@ -1,26 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { StarRating } from "@/components/StarRating";
 import { Header } from "@/components/Header";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ProviderBadge } from "@/components/ProviderBadge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Wrench, MapPin, ArrowLeft, Calendar } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Wrench, MapPin, ArrowLeft, Calendar, AlertTriangle, Clock, Shield, CheckCircle, User, Phone, MessageSquare } from "lucide-react";
 import { getServiceImage } from "@/data/serviceImages";
 import { Review, Service } from "@/types";
 import { apiRequest } from "@/lib/api";
+import { formatPrice, isRoadsideCategory } from "@/components/customer/CustomerUI";
 
 const ServiceDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
-  const { toast } = useToast();
-  const [bookingDate, setBookingDate] = useState("");
-  const [showBooking, setShowBooking] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,18 +41,13 @@ const ServiceDetailsPage = () => {
         console.log("[v0] Error loading service details:", error);
         setService(null);
         setReviews([]);
-        toast({
-          title: "Error",
-          description: "Failed to load service details. Please try again.",
-          variant: "destructive",
-        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -93,29 +81,7 @@ const ServiceDetailsPage = () => {
     );
   }
 
-  const handleBook = async () => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-    if (!bookingDate) {
-      toast({ title: "Please select a date", variant: "destructive" });
-      return;
-    }
-    try {
-      await apiRequest<{ booking: unknown }>("/bookings", {
-        method: "POST",
-        body: JSON.stringify({ serviceId: service.id, bookingDate }),
-      });
-
-      toast({ title: "Booking Confirmed!", description: `Your booking for ${service.serviceName} on ${bookingDate} has been submitted.` });
-      setShowBooking(false);
-      navigate("/customer/bookings");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not create booking";
-      toast({ title: "Booking failed", description: message, variant: "destructive" });
-    }
-  };
+  const isRoadsideService = isRoadsideCategory(service.category);
 
   return (
     <div className="min-h-screen bg-background">
@@ -176,71 +142,97 @@ const ServiceDetailsPage = () => {
           </div>
 
           {/* Booking sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-lg border bg-gradient-to-br from-white to-gray-50 p-6 shadow-elevated card-hover">
+          <div className="lg:col-span-1 space-y-4">
+            {/* Emergency CTA for roadside services */}
+            {isRoadsideService && (
+              <div className="rounded-xl border-2 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-orange-900 dark:text-orange-200">Emergency Assistance</h3>
+                    <p className="text-xs text-orange-700 dark:text-orange-300">Need help right now?</p>
+                  </div>
+                </div>
+                <Link to="/on-road-services/request">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white gap-2">
+                    Get Emergency Help
+                    <AlertTriangle className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Booking card */}
+            <div className="sticky top-24 rounded-xl border bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 p-6 shadow-lg">
               <div className="text-center mb-6">
                 <div className="inline-block bg-primary/10 px-3 py-1 rounded-full mb-3">
                   <span className="text-xs font-semibold text-primary">PRICING</span>
                 </div>
                 <div>
-                  <span className="text-4xl font-bold text-foreground">₹{service.price}</span>
+                  <span className="text-4xl font-bold text-foreground">{formatPrice(service.price)}</span>
                   <span className="text-sm text-muted-foreground"> / service</span>
                 </div>
               </div>
 
+              {/* Trust indicators */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <Shield className="w-4 h-4 text-primary" />
                   <span className="text-muted-foreground">Verified Professional</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  <span className="text-muted-foreground">Fast & Reliable</span>
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Fast Response Time</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  <span className="text-muted-foreground">24/7 Support</span>
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Quality Guaranteed</span>
                 </div>
               </div>
 
-              {!showBooking ? (
+              <Link to={`/book/${service.id}`}>
                 <Button 
                   className="w-full h-11 gap-2 shadow-md hover:shadow-lg transition-smooth" 
-                  onClick={() => setShowBooking(true)}
                 >
                   <Calendar className="h-4 w-4" /> 
-                  Book Now
+                  Book Service
                 </Button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="font-semibold">Select Date</Label>
-                    <Input 
-                      type="date" 
-                      className="mt-2 input-modern" 
-                      value={bookingDate} 
-                      onChange={(e) => setBookingDate(e.target.value)}
-                    />
-                  </div>
-                  <Button 
-                    className="w-full h-11 shadow-md hover:shadow-lg transition-smooth" 
-                    onClick={handleBook}
-                  >
-                    Confirm Booking
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full h-11" 
-                    onClick={() => setShowBooking(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
+              </Link>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
                 Your booking is secure and you can cancel anytime
               </p>
+            </div>
+
+            {/* Provider contact */}
+            <div className="rounded-xl border bg-card p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Contact Provider
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{service.providerName}</p>
+                    <p className="text-xs text-muted-foreground">{service.providerLocation}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 gap-2">
+                    <Phone className="w-3 h-3" />
+                    Call
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 gap-2">
+                    <MessageSquare className="w-3 h-3" />
+                    Message
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

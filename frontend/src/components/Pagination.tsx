@@ -55,11 +55,11 @@ const PaginationComponent = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-8 p-4 bg-muted rounded-lg border border-border">
       {/* Items per page selector */}
       {onItemsPerPageChange && (
         <div className="flex items-center gap-2">
-          <label htmlFor="items-per-page" className="text-sm font-medium text-gray-700">
+          <label htmlFor="items-per-page" className="text-sm font-medium text-foreground">
             Items per page:
           </label>
           <select
@@ -78,7 +78,7 @@ const PaginationComponent = ({
       )}
 
       {/* Page info */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         Page <span className="font-semibold">{currentPage}</span> of{' '}
         <span className="font-semibold">{totalPages}</span>
       </div>
@@ -98,7 +98,7 @@ const PaginationComponent = ({
         {pageNumbers.map((pageNum, idx) => {
           if (pageNum === '...') {
             return (
-              <span key={`ellipsis-${idx}`} className="px-2 py-1 text-gray-500">
+              <span key={`ellipsis-${idx}`} className="px-2 py-1 text-muted-foreground">
                 ...
               </span>
             );

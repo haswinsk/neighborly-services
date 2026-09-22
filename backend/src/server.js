@@ -11,6 +11,8 @@ import reviewsRoutes from "./routes/reviews.routes.js";
 import bookingsRoutes from "./routes/bookings.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import notificationsRoutes from "./routes/notifications.routes.js";
+import verificationRoutes from "./routes/verification.routes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -48,30 +50,28 @@ const ALLOWED_ORIGINS = env.isProduction
       "http://localhost:8080",
       "http://localhost:8081",
       "http://localhost:8082",
+      "http://localhost:8083",
+      "http://localhost:8084",
+      "http://localhost:8085",
       "https://neighborly-services.vercel.app",
     ];
 
+// Configure CORS with allowed origins
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
-      // Allow exact matches from ALLOWED_ORIGINS
-      if (ALLOWED_ORIGINS.includes(origin)) {
-        return callback(null, true);
-      }
-      // Allow all Vercel deployments for neighborly-services (production and previews)
-      if (/^https:\/\/neighborly-services(-[a-z0-9]+)*\.vercel\.app$/.test(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS: origin not allowed — ${origin}`));
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      if (/^https:\/\/neighborly-services(-[a-z0-9]+)*\.vercel\.app$/.test(origin)) return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// Ensure preflight OPTIONS requests are handled and receive CORS headers
+
+// Ensure preflight OPTIONS requests are handled
 app.options("*", cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -81,10 +81,13 @@ app.options("*", cors({
   },
   credentials: true,
 }));
+
 app.use(express.json({ limit: "100kb" }));
 app.use(morgan("dev"));
-app.use("/api", apiLimiter);
+
+// Apply rate limiting
 app.use("/api/auth", authLimiter);
+app.use("/api", apiLimiter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -99,6 +102,8 @@ app.use("/api/services", servicesRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/verification", verificationRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);

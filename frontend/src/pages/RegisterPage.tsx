@@ -71,7 +71,7 @@ const RegisterPage = () => {
 
       toast({
         title: "Account created successfully!",
-        description: role === "provider" ? "Your account is pending admin approval." : "Welcome to LocalServ!",
+        description: role === "provider" ? "Your account is pending admin approval." : "Welcome to Neighbourly Services!",
         variant: "default"
       });
 
@@ -87,18 +87,18 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center p-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-elevated p-8">
+        <div className="bg-card rounded-lg shadow-elevated p-8">
           {/* Header */}
           <div className="mb-8 text-center">
             <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600">
                 <Wrench className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-foreground">LocalServ</span>
+              <span className="text-2xl font-bold text-foreground">Neighbourly Services</span>
             </Link>
-            <h1 className="mt-6 text-3xl font-bold text-foreground">Join LocalServ</h1>
+            <h1 className="mt-6 text-3xl font-bold text-foreground">Join Neighbourly Services</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Create your account to get started
             </p>
@@ -230,9 +230,9 @@ const RegisterPage = () => {
 
               {/* Provider Location Tip */}
               {role === "provider" && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700">
+                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
                     You'll be able to add your service location after registration from your dashboard to appear in customer searches.
                   </p>
                 </div>
@@ -290,10 +290,10 @@ const RegisterPage = () => {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-muted-foreground">Already a member?</span>
+              <span className="px-3 bg-card text-muted-foreground">Already a member?</span>
             </div>
           </div>
 

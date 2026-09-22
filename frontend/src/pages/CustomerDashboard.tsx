@@ -3,16 +3,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Calendar, CheckCircle, Clock, Search, MapPin, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { QuickActionCard } from "@/components/QuickActionCard";
+import { BookingStatusTimeline } from "@/components/BookingStatusTimeline";
+import { Calendar, CheckCircle, Clock, Search, MapPin, AlertCircle, AlertTriangle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types";
 import { apiRequest } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice, isRoadsideCategory } from "@/components/customer/CustomerUI";
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [locationSet, setLocationSet] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(true);
@@ -69,6 +73,10 @@ const CustomerDashboard = () => {
 
   const activeBookings = myBookings.filter((b) => b.status !== "Completed" && b.status !== "Rejected");
   const completedBookings = myBookings.filter((b) => b.status === "Completed");
+  const emergencyBookings = myBookings.filter((b) => isRoadsideCategory(b.serviceName));
+  
+  // Check for active On-Road booking
+  const activeRoadsideBooking = activeBookings.find((b) => isRoadsideCategory(b.serviceName));
 
   return (
     <DashboardLayout>
@@ -123,10 +131,82 @@ const CustomerDashboard = () => {
         </div>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Bookings" value={myBookings.length} icon={Calendar} />
         <StatCard title="Active" value={activeBookings.length} icon={Clock} />
         <StatCard title="Completed" value={completedBookings.length} icon={CheckCircle} />
+        <StatCard title="Emergency Requests" value={emergencyBookings.length} icon={AlertTriangle} />
+      </div>
+
+      {/* Active Roadside Request */}
+      {activeRoadsideBooking && (
+        <div className="mt-8 rounded-xl border-2 border-orange-200 bg-orange-50 p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-orange-900">Active Roadside Request</h2>
+              <p className="text-sm text-orange-700">Help is on the way!</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-orange-700">Service</p>
+                <p className="font-semibold text-orange-900">{activeRoadsideBooking.serviceName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-orange-700">Provider</p>
+                <p className="font-semibold text-orange-900">{activeRoadsideBooking.providerName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-orange-700">Status</p>
+                <StatusBadge status={activeRoadsideBooking.status} />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <BookingStatusTimeline currentStatus={activeRoadsideBooking.status} />
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-orange-200">
+            <Link to={`/customer/bookings/${activeRoadsideBooking.id}`}>
+              <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
+                <MapPin className="w-4 h-4" />
+                Track Request
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <QuickActionCard
+            icon={AlertTriangle}
+            title="Emergency Help"
+            description="Get immediate roadside assistance"
+            onClick={() => navigate("/on-road-services")}
+            variant="emergency"
+          />
+          <QuickActionCard
+            icon={Search}
+            title="Browse Services"
+            description="Find home and on-road services"
+            onClick={() => navigate("/services")}
+          />
+          <QuickActionCard
+            icon={Calendar}
+            title="My Bookings"
+            description="View and manage your bookings"
+            onClick={() => navigate("/customer/bookings")}
+          />
+        </div>
       </div>
 
       <div className="mt-8">
@@ -138,24 +218,23 @@ const CustomerDashboard = () => {
         </div>
         <div className="mt-4 space-y-3">
           {myBookings.slice(0, 3).map((b) => (
-            <div key={b.id} className="flex items-center justify-between rounded-lg border bg-card p-4">
+            <div key={b.id} className="flex items-center justify-between rounded-lg border bg-card p-4 hover:shadow-sm transition-shadow">
               <div>
                 <p className="font-medium text-foreground">{b.serviceName}</p>
                 <p className="text-sm text-muted-foreground">by {b.providerName} · {b.bookingDate}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-foreground">₹{b.price}</span>
+                <span className="text-sm font-semibold text-foreground">{formatPrice(b.price)}</span>
                 <StatusBadge status={b.status} />
               </div>
             </div>
           ))}
+          {myBookings.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No bookings yet. Start by browsing services!</p>
+            </div>
+          )}
         </div>
-      </div>
-
-      <div className="mt-8 text-center">
-        <Link to="/services">
-          <Button className="gap-2"><Search className="h-4 w-4" /> Browse Services</Button>
-        </Link>
       </div>
     </DashboardLayout>
   );

@@ -205,7 +205,7 @@ const AdminProvidersPage = () => {
 
                   {/* Rating (placeholder) */}
                   <div className="flex items-center gap-1 py-2 border-t border-b">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star className="w-4 h-4 fill-yellow-400 dark:fill-yellow-500 text-yellow-400 dark:text-yellow-500" />
                     <span className="text-sm font-medium">4.8</span>
                     <span className="text-xs text-muted-foreground">(24 reviews)</span>
                   </div>

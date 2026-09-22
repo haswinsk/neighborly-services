@@ -34,7 +34,7 @@ export function ProviderPopup({
     : null;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 max-w-sm">
+    <div className="bg-card rounded-lg shadow-lg p-4 max-w-sm">
       {service.image && (
         <img
           src={service.image}
@@ -44,9 +44,9 @@ export function ProviderPopup({
       )}
 
       <div className="space-y-2">
-        <h3 className="font-bold text-lg text-gray-900">{service.providerName}</h3>
+        <h3 className="font-bold text-lg text-foreground">{service.providerName}</h3>
 
-        <p className="text-sm text-gray-600">{service.serviceName}</p>
+        <p className="text-sm text-muted-foreground">{service.serviceName}</p>
 
         <div className="flex items-center justify-between">
           <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
@@ -55,13 +55,13 @@ export function ProviderPopup({
           <span className="flex items-center gap-1 text-sm font-semibold">
             ⭐ {service.rating.toFixed(1)}
             {service.reviewCount && (
-              <span className="text-gray-500 font-normal">({service.reviewCount})</span>
+              <span className="text-muted-foreground font-normal">({service.reviewCount})</span>
             )}
           </span>
         </div>
 
-        <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
-          <span className="text-sm text-gray-700">
+        <div className="flex items-center justify-between bg-muted p-2 rounded">
+          <span className="text-sm text-foreground">
             {service.providerLocation}
           </span>
           {distance && (
@@ -72,8 +72,8 @@ export function ProviderPopup({
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded p-2 my-2">
-          <p className="text-lg font-bold text-gray-900">₹{service.price}</p>
-          <p className="text-xs text-gray-600">Starting price per hour</p>
+          <p className="text-lg font-bold text-foreground">₹{service.price}</p>
+          <p className="text-xs text-muted-foreground">Starting price per hour</p>
         </div>
 
         <button

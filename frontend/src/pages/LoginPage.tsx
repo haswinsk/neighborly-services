@@ -71,7 +71,7 @@ const LoginPage = () => {
       
       if (loggedInUser.role === "admin") navigate("/admin");
       else if (loggedInUser.role === "provider") navigate("/provider");
-      else navigate("/customer");
+      else navigate("/");
     } catch (error) {
       const description = error instanceof Error ? error.message : "Invalid email or password";
       toast({ title: "Sign in failed", description, variant: "destructive" });
@@ -93,16 +93,16 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-elevated p-8">
+        <div className="bg-white dark:bg-card rounded-lg shadow-elevated p-8">
           {/* Header */}
           <div className="mb-8 text-center">
             <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
                 <Wrench className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-foreground">LocalServ</span>
+              <span className="text-2xl font-bold text-foreground">Neighbourly Services</span>
             </Link>
             <h1 className="mt-6 text-3xl font-bold text-foreground">Welcome back</h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -154,7 +154,7 @@ const LoginPage = () => {
                     e.preventDefault();
                     toast({
                       title: "Password Reset",
-                      description: "Contact support at support@localserv.com to reset your password",
+                      description: "Contact support at support@Neighbourly Services.com to reset your password",
                       variant: "default"
                     });
                   }}
@@ -205,7 +205,7 @@ const LoginPage = () => {
                 id="remember"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
               />
               <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                 Remember me
@@ -235,10 +235,10 @@ const LoginPage = () => {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-muted-foreground">New to LocalServ?</span>
+              <span className="px-3 bg-card text-muted-foreground">New to Neighbourly Services?</span>
             </div>
           </div>
 

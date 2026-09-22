@@ -61,7 +61,7 @@ export const AdvancedSearch = ({ onSearch, onClose }: AdvancedSearchProps) => {
 
       {/* Advanced Filters */}
       {isOpen && (
-        <div id="advanced-filters" className="mt-4 p-4 bg-white rounded-lg border border-gray-200 space-y-6 animate-slide-in">
+        <div id="advanced-filters" className="mt-4 p-4 bg-card rounded-lg border border-border space-y-6 animate-slide-in">
           {/* Price Range */}
           <fieldset>
             <legend className="font-semibold text-sm mb-3">Price Range</legend>
@@ -136,7 +136,7 @@ export const AdvancedSearch = ({ onSearch, onClose }: AdvancedSearchProps) => {
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
                     minRating === rating
                       ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
                 >
                   {rating === 0 ? 'All' : `${rating}+`}

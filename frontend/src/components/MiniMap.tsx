@@ -28,7 +28,7 @@ export function MiniMap({ pins, height = 160 }: MiniMapProps) {
 
   return (
     <div
-      className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+      className="rounded-lg overflow-hidden border border-border shadow-sm"
       style={{ height }}
     >
       <MapContainer
@@ -59,8 +59,8 @@ export function MiniMap({ pins, height = 160 }: MiniMapProps) {
 /** Inline location badge — shown when no coordinates are available */
 export function LocationBadge({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-      <MapPin className="w-3.5 h-3.5 text-gray-400" />
+    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-3 py-2 rounded-lg border border-border">
+      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
       <span>{label}</span>
     </div>
   );

@@ -26,14 +26,20 @@ model User {
   longitude Float?
   avatar    String   @default("")
   approved  Boolean  @default(true)
+  isAvailable Boolean @default(false)
+  bio       String   @default("")
+  experience String  @default("")
+  serviceRadiusKm Float @default(5)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  servicesProvided Service[] @relation("ProviderServices")
-  bookingsAsCustomer Booking[] @relation("CustomerBookings")
-  bookingsAsProvider Booking[] @relation("ProviderBookings")
-  reviewsGiven Review[] @relation("CustomerReviews")
-  reviewsReceived Review[] @relation("ProviderReviews")
+  servicesProvided   Service[]              @relation("ProviderServices")
+  bookingsAsCustomer Booking[]              @relation("CustomerBookings")
+  bookingsAsProvider Booking[]              @relation("ProviderBookings")
+  reviewsGiven       Review[]               @relation("CustomerReviews")
+  reviewsReceived    Review[]               @relation("ProviderReviews")
+  notifications      Notification[]
+  verifications      ProviderVerification[]
 }
 
 model Service {
@@ -51,6 +57,7 @@ model Service {
   rating           Float    @default(0)
   reviewCount      Int      @default(0)
   image            String   @default("")
+  isActive         Boolean  @default(true)
   latitude         Float?
   longitude        Float?
   createdAt        DateTime @default(now())
@@ -73,12 +80,14 @@ model Booking {
   status         String   @default("Requested")
   paymentStatus  String   @default("Pending")
   price          Float
+  notes          String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  customer User @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
-  provider User @relation("ProviderBookings", fields: [providerId], references: [id], onDelete: Cascade)
+  customer User    @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User    @relation("ProviderBookings", fields: [providerId], references: [id], onDelete: Cascade)
   service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  review   Review?
 }
 
 model Review {
@@ -87,13 +96,58 @@ model Review {
   customerName String
   providerId   String
   serviceId    String
+  bookingId    String?  @unique
   rating       Int
   comment      String
   date         String
+  // AI-assisted review intelligence (deterministic local analysis only — never auto-approves anything)
+  aiSentiment  String?  // "positive" | "neutral" | "negative"
+  aiTags       String[] // e.g. ["punctual", "professional", "overpriced"]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  customer User @relation("CustomerReviews", fields: [customerId], references: [id], onDelete: Cascade)
-  provider User @relation("ProviderReviews", fields: [providerId], references: [id], onDelete: Cascade)
-  service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  customer User     @relation("CustomerReviews", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User     @relation("ProviderReviews", fields: [providerId], references: [id], onDelete: Cascade)
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+}
+
+// Persisted in-app notifications — created at booking/status/verification lifecycle events
+model Notification {
+  id        String   @id @default(uuid()) @map("_id")
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // "info" | "success" | "warning" | "error"
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Progressive provider verification — admin always decides manually
+// AI fields are informational only and never trigger automatic approval
+model ProviderVerification {
+  id                  String    @id @default(uuid()) @map("_id")
+  providerId          String
+  serviceCategory     String
+  skills              String[]
+  experienceYears     Int       @default(0)
+  evidenceType        String    // "work_photos" | "references" | "certificates" | "self_declaration"
+  evidenceDescription String    @default("")
+  assessmentAnswers   String[]  // free-text scenario answers supplied by provider
+  // AI assistance — consistency/risk summary only, never automatic decision
+  aiConsistencyScore  Float?    // 0–100 claim-consistency score
+  aiRiskLevel         String?   // "low" | "medium" | "high"
+  aiFlags             String[]  // flags surfaced to admin for manual review
+  // Admin decision — always human-controlled
+  adminDecision       String    @default("pending") // "pending" | "approved" | "rejected" | "needs_evidence"
+  adminNotes          String?
+  reviewerId          String?
+  submittedAt         DateTime  @default(now())
+  reviewedAt          DateTime?
+  updatedAt           DateTime  @updatedAt
+
+  provider User @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }

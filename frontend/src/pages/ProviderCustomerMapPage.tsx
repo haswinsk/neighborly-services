@@ -77,7 +77,7 @@ const ProviderCustomerMapPage = () => {
     <DashboardLayout>
       <div className="h-screen flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="bg-card border-b px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"

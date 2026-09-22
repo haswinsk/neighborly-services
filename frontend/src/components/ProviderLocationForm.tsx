@@ -183,10 +183,10 @@ export const ProviderLocationForm = ({
     : [DEFAULT_COORDINATES.latitude, DEFAULT_COORDINATES.longitude];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
           <MapPin className="w-5 h-5 text-primary" />
           Service Location
         </h2>
@@ -220,7 +220,7 @@ export const ProviderLocationForm = ({
           />
           <DraggableMarker position={markerPosition} onMove={handleMapMove} />
         </MapContainer>
-        <div className="absolute bottom-3 left-3 z-[400] bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-gray-600 shadow">
+        <div className="absolute bottom-3 left-3 z-[400] bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-muted-foreground shadow">
           Click on the map or drag the pin to set your location
         </div>
       </div>
@@ -229,7 +229,7 @@ export const ProviderLocationForm = ({
       <div className="px-6 py-5 space-y-4">
         {/* Coordinates pill */}
         {hasCoords && (
-          <div className="inline-flex items-center gap-2 text-xs font-mono text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+          <div className="inline-flex items-center gap-2 text-xs font-mono text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1">
             <MapPin className="w-3 h-3" />
             {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
           </div>

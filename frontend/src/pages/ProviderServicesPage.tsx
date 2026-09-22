@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, MapPin, AlertCircle, Loader2, Navigation } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, AlertCircle, Loader2, Navigation, AlertTriangle, Power, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
@@ -21,6 +21,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "re
 import L from "leaflet";
 import { reverseGeocode } from "@/lib/geocoding";
 import { createCategoryMarker } from "@/lib/markerIcons";
+import { formatPrice, isRoadsideCategory } from "@/components/customer/CustomerUI";
 
 interface LocationState {
   latitude: number | null;
@@ -96,6 +97,8 @@ const DEFAULT_MAP_CENTER: [number, number] = [11.0126, 76.9558]; // Coimbatore
 const ProviderServicesPage = () => {
   const { user } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [serviceName, setServiceName] = useState("");
   const [category, setCategory] = useState("");
@@ -114,11 +117,15 @@ const ProviderServicesPage = () => {
 
   useEffect(() => {
     const load = async () => {
+      setIsLoadingServices(true);
+      setLoadError(null);
       try {
-        const res = await apiRequest<{ services: Service[] }>("/services");
+        const res = await apiRequest<{ services: Service[] }>("/services/provider/mine");
         setServices(res.services);
-      } catch {
-        setServices([]);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Failed to load services");
+      } finally {
+        setIsLoadingServices(false);
       }
     };
     load();
@@ -142,10 +149,14 @@ const ProviderServicesPage = () => {
     [services, user?.id]
   );
 
+  // Separate services by category
+  const homeServices = myServices.filter(s => !isRoadsideCategory(s.category));
+  const onRoadServices = myServices.filter(s => isRoadsideCategory(s.category));
+
   const mapCenter: [number, number] =
-    location.latitude && location.longitude
+    location.latitude !== null && location.longitude !== null && isFinite(location.latitude) && isFinite(location.longitude)
       ? [location.latitude, location.longitude]
-      : user?.latitude && user?.longitude
+      : user?.latitude != null && user?.longitude != null && isFinite(user.latitude) && isFinite(user.longitude)
       ? [user.latitude, user.longitude]
       : DEFAULT_MAP_CENTER;
 
@@ -238,6 +249,22 @@ const ProviderServicesPage = () => {
     }
   };
 
+  const toggleServiceActive = async (serviceId: string, isActive: boolean) => {
+    try {
+      await apiRequest<{ service: Service }>(`/services/${serviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ isActive }),
+      });
+      setServices((prev) => 
+        prev.map((s) => (s.id === serviceId ? { ...s, isActive } : s))
+      );
+      toast({ title: isActive ? "Service activated" : "Service deactivated" });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Unable to update service";
+      toast({ title: "Update failed", description: msg, variant: "destructive" });
+    }
+  };
+
   const resetForm = () => {
     setServiceName("");
     setCategory("");
@@ -246,6 +273,43 @@ const ProviderServicesPage = () => {
     setLocation({ latitude: null, longitude: null, address: "", city: "", state: "" });
     setShowForm(false);
   };
+
+  if (isLoadingServices) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-24 gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading your services…</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <AlertCircle className="h-10 w-10 text-destructive" />
+          <p className="text-sm font-medium text-foreground">Failed to load services</p>
+          <p className="text-xs text-muted-foreground">{loadError}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsLoadingServices(true);
+              setLoadError(null);
+              apiRequest<{ services: Service[] }>("/services/provider/mine")
+                .then((res) => setServices(res.services))
+                .catch((err) => setLoadError(err instanceof Error ? err.message : "Failed to load services"))
+                .finally(() => setIsLoadingServices(false));
+            }}
+          >
+            Try Again
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -259,6 +323,34 @@ const ProviderServicesPage = () => {
           Add Service
         </Button>
       </div>
+
+      {/* Service Categories Summary */}
+      {!showForm && myServices.length > 0 && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <Wrench className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Home Services</h2>
+                <p className="text-sm text-muted-foreground">{homeServices.length} active</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-orange-200 bg-orange-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-orange-900 dark:text-orange-200">On-Road Services</h2>
+                <p className="text-sm text-orange-700 dark:text-orange-300">{onRoadServices.length} active</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form
@@ -417,7 +509,7 @@ const ProviderServicesPage = () => {
 
             {/* No-location warning */}
             {location.latitude === null && !user?.latitude && (
-              <div className="mt-3 flex gap-2 items-start p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-xs">
+              <div className="mt-3 flex gap-2 items-start p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-300 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>Click the map above or use GPS to set your service location so customers can find you.</span>
               </div>
@@ -434,7 +526,7 @@ const ProviderServicesPage = () => {
       )}
 
       {/* Services list */}
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-6">
         {myServices.length === 0 && !showForm && (
           <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
             <MapPin className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -444,43 +536,120 @@ const ProviderServicesPage = () => {
             </p>
           </div>
         )}
-        {myServices.map((s) => (
-          <div
-            key={s.id}
-            className="flex items-center justify-between rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="min-w-0 flex-1 pr-4">
-              <span className="inline-block text-xs font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5 mb-1">
-                {s.category}
-              </span>
-              <p className="font-semibold text-foreground">{s.serviceName}</p>
-              <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{s.description}</p>
-              {(s.latitude || s.city) && (
-                <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <MapPin className="w-3 h-3" />
-                  {s.city || "Location set"}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-lg font-bold text-foreground">&#8377;{s.price}</span>
-              <Button variant="ghost" size="icon" disabled aria-label="Edit service">
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(s.id)}
-                aria-label="Delete service"
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+
+        {/* Home Services Section */}
+        {homeServices.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-blue-600" />
+              Home Services
+            </h2>
+            <div className="space-y-3">
+              {homeServices.map((s) => (
+                <ServiceCard
+                  key={s.id}
+                  service={s}
+                  onDelete={handleDelete}
+                  onToggleActive={toggleServiceActive}
+                />
+              ))}
             </div>
           </div>
-        ))}
+        )}
+
+        {/* On-Road Services Section */}
+        {onRoadServices.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-orange-900 dark:text-orange-200 mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              On-Road Services
+            </h2>
+            <div className="space-y-3">
+              {onRoadServices.map((s) => (
+                <ServiceCard
+                  key={s.id}
+                  service={s}
+                  onDelete={handleDelete}
+                  onToggleActive={toggleServiceActive}
+                  isEmergency
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
 };
+
+// Service Card Component
+function ServiceCard({ 
+  service, 
+  onDelete, 
+  onToggleActive, 
+  isEmergency = false 
+}: { 
+  service: Service; 
+  onDelete: (id: string) => void; 
+  onToggleActive: (id: string, isActive: boolean) => void;
+  isEmergency?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
+        isEmergency ? "border-orange-200 bg-orange-50/50" : "bg-card"
+      } ${!service.isActive ? "opacity-60" : ""}`}
+    >
+      <div className="min-w-0 flex-1 pr-4">
+        <div className="flex items-center gap-2 mb-1">
+          {isEmergency && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-foreground dark:text-foreground bg-orange-100 dark:bg-orange-900 px-2 py-0.5 rounded-full">
+              <AlertTriangle className="w-3 h-3" />
+              EMERGENCY
+            </span>
+          )}
+          <span className={`inline-block text-xs font-semibold rounded-full px-2 py-0.5 ${
+            isEmergency ? "text-foreground dark:text-foreground bg-orange-100 dark:bg-orange-900" : "text-primary bg-primary/10"
+          }`}>
+            {service.category}
+          </span>
+          {!service.isActive && (
+            <span className="text-xs text-muted-foreground">· Inactive</span>
+          )}
+        </div>
+        <p className="font-semibold text-foreground">{service.serviceName}</p>
+        <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{service.description}</p>
+        {(service.latitude || service.city) && (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+            <MapPin className="w-3 h-3" />
+            {service.city || "Location set"}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="text-lg font-bold text-foreground">{formatPrice(service.price)}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onToggleActive(service.id, !service.isActive)}
+          title={service.isActive ? "Deactivate" : "Activate"}
+        >
+          <Power className={`h-4 w-4 ${service.isActive ? "text-green-600" : "text-muted-foreground"}`} />
+        </Button>
+        <Button variant="ghost" size="icon" disabled aria-label="Edit service">
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDelete(service.id)}
+          aria-label="Delete service"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default ProviderServicesPage;

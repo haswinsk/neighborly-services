@@ -7,6 +7,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User | null>;
   register: (name: string, email: string, password: string, role: UserRole, phone: string, location: string) => Promise<User | null>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -72,8 +74,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  // Optimistically update user state (e.g. after availability toggle, profile edit)
+  const updateUser = (updates: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev));
+  };
+
+  // Re-fetch user from backend (e.g. after admin approves provider)
+  const refreshUser = async () => {
+    try {
+      const response = await apiRequest<{ user: User }>("/auth/me");
+      if (response?.user) setUser(response.user);
+    } catch {
+      // Keep stale user if refresh fails
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser, refreshUser, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

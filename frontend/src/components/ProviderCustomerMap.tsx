@@ -92,8 +92,8 @@ export function ProviderCustomerMap({
 
       const popup = `
         <div class="text-sm font-semibold">${pin.customerName}</div>
-        <div class="text-xs text-gray-600">${pin.serviceName}</div>
-        ${pin.distance ? `<div class="text-xs text-gray-600">${pin.distance.toFixed(1)} km away</div>` : ""}
+        <div class="text-xs text-gray-600 dark:text-gray-300">${pin.serviceName}</div>
+        ${pin.distance ? `<div class="text-xs text-gray-600 dark:text-gray-300">${pin.distance.toFixed(1)} km away</div>` : ""}
       `;
 
       L.marker([pin.latitude, pin.longitude], { icon: customerIcon })

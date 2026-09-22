@@ -75,25 +75,19 @@ function FocusMarker({
 
   useEffect(() => {
     if (!selectedService) {
-      console.log('[v0] FocusMarker: no selectedService');
       return;
     }
 
     const service = services.find((s) => s.id === selectedService);
-    console.log('[v0] FocusMarker looking for service:', selectedService, 'found:', service);
 
     if (!service || !service.latitude || !service.longitude) {
-      console.log('[v0] FocusMarker: service missing or no coordinates');
       return;
     }
 
     // Validate coordinates before flying to prevent NaN errors
     if (!Number.isFinite(service.latitude) || !Number.isFinite(service.longitude)) {
-      console.log("[v0] Invalid service coordinates:", service);
       return;
     }
-
-    console.log('[v0] FocusMarker flying to:', [service.latitude, service.longitude]);
 
     try {
       // Smooth pan and zoom to selected marker
@@ -102,12 +96,11 @@ function FocusMarker({
         easeLinearity: 0.25,
       });
     } catch (err) {
-      console.log('[v0] FocusMarker flyTo error:', err);
       // Fallback to setView if flyTo fails
       try {
         map.setView([service.latitude, service.longitude], 16);
       } catch (fallbackErr) {
-        console.log('[v0] FocusMarker setView fallback error:', fallbackErr);
+        // Silent fallback - coordinates are invalid
       }
     }
   }, [selectedService, services, map]);
@@ -165,19 +158,13 @@ function FitBounds({
   useEffect(() => {
     // Don't run FitBounds if a service is selected - let FocusMarker handle it
     if (selectedService) {
-      console.log('[v0] FitBounds skipped - selectedService:', selectedService);
       return;
     }
-
-    console.log('[v0] FitBounds effect:', { userCoords, servicesCount: services.length, customerCoords });
 
     // Validate user coordinates
     if (!Number.isFinite(userCoords.latitude) || !Number.isFinite(userCoords.longitude)) {
-      console.log("[v0] Invalid user coordinates in FitBounds:", userCoords);
       return;
     }
-    
-    console.log('[v0] User coordinates valid:', userCoords);
 
     const ids = services
       .filter((s) => s.latitude && s.longitude && Number.isFinite(s.latitude) && Number.isFinite(s.longitude))
@@ -330,7 +317,7 @@ function ServicePopup({
       </div>
 
       {/* Body */}
-      <div className="px-4 py-3 space-y-2.5 bg-white rounded-b-lg">
+      <div className="px-4 py-3 space-y-2.5 bg-card rounded-b-lg">
         {/* Category + Rating */}
         <div className="flex items-center justify-between">
           <span
@@ -343,13 +330,13 @@ function ServicePopup({
             <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
             {service.rating.toFixed(1)}
             {service.reviewCount ? (
-              <span className="text-gray-400 font-normal">({service.reviewCount})</span>
+              <span className="text-muted-foreground font-normal">({service.reviewCount})</span>
             ) : null}
           </span>
         </div>
 
         {/* Location + Distance */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{service.providerLocation || 'Location set'}</span>
           {distance !== null && (
@@ -360,10 +347,10 @@ function ServicePopup({
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-1 text-base font-bold text-gray-900">
+        <div className="flex items-center gap-1 text-base font-bold text-foreground">
           <IndianRupee className="w-4 h-4" />
           {service.price}
-          <span className="text-xs font-normal text-gray-500">/hr</span>
+          <span className="text-xs font-normal text-muted-foreground">/hr</span>
         </div>
 
         {/* Book Now */}
@@ -389,21 +376,11 @@ export function ServiceMap({
   onMarkerClick,
   onBookNow,
 }: ServiceMapProps) {
-  // Validate that userCoordinates are valid before rendering map
-  console.log('[v0] ServiceMap rendering with:', {
-    userCoordinates,
-    selectedService,
-    servicesCount: services.length,
-    focusLocation,
-  });
-
   const validCenter: [number, number] = (
     Number.isFinite(userCoordinates.latitude) && Number.isFinite(userCoordinates.longitude)
       ? [userCoordinates.latitude, userCoordinates.longitude]
       : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude]
   );
-
-  console.log('[v0] Map center:', validCenter);
 
   return (
     <div className="h-full w-full relative">
@@ -462,8 +439,8 @@ export function ServiceMap({
           icon={createUserMarker()}
         >
           <Popup>
-            <div className="text-sm font-semibold text-gray-800">Your Location</div>
-            <div className="text-xs text-gray-500 mt-0.5">
+            <div className="text-sm font-semibold text-foreground">Your Location</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
               {userCoordinates.latitude.toFixed(4)}, {userCoordinates.longitude.toFixed(4)}
             </div>
           </Popup>
@@ -476,8 +453,8 @@ export function ServiceMap({
             icon={createCustomerMarker()}
           >
             <Popup>
-              <div className="text-sm font-semibold text-gray-800">Customer Location</div>
-              <div className="text-xs text-gray-500 mt-0.5">
+              <div className="text-sm font-semibold text-foreground">Customer Location</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {customerCoordinates.latitude.toFixed(4)}, {customerCoordinates.longitude.toFixed(4)}
               </div>
             </Popup>

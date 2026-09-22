@@ -65,11 +65,14 @@ export const NearbyProviders = ({
           params.append('category', category);
         }
 
-        const response = await fetch(`/api/users/nearby-providers?${params}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        const response = await fetch(
+          `${import.meta.env.DEV ? "http://localhost:5000/api" : (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "")}/users/nearby-providers?${params}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch nearby providers');
@@ -112,10 +115,10 @@ export const NearbyProviders = ({
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+      <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
         <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-red-900">Error</p>
+          <p className="text-sm font-medium text-red-900 dark:text-red-200">Error</p>
           <p className="text-sm text-red-700">{error}</p>
         </div>
       </div>
@@ -141,10 +144,10 @@ export const NearbyProviders = ({
         {providers.map((provider) => (
           <div
             key={provider.id}
-            className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
           >
             {/* Provider Header */}
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-border">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0">
                   {provider.avatar ? (
@@ -178,7 +181,7 @@ export const NearbyProviders = ({
             </div>
 
             {/* Services */}
-            <div className="p-4 border-b border-gray-200 max-h-32 overflow-y-auto">
+            <div className="p-4 border-b border-border max-h-32 overflow-y-auto">
               <p className="text-xs font-semibold text-foreground mb-2">Services</p>
               <div className="space-y-2">
                 {provider.servicesProvided.slice(0, 2).map((service) => (
@@ -220,7 +223,7 @@ export const NearbyProviders = ({
             </div>
 
             {/* Action Button */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-border">
               <Button
                 size="sm"
                 className="w-full"

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Map as MapIcon } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { AlertCircle, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Service } from "@/types";
 import { apiRequest } from "@/lib/api";
@@ -20,22 +20,43 @@ const ServiceListingPage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState("distance");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
   const [focusLocation, setFocusLocation] = useState<{ latitude: number; longitude: number; customerName?: string } | null>(null);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { coordinates, loading } = useGeolocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Always show the map immediately using default location; upgrade to GPS when ready
   // If focusLocation is set (from booking card), use that instead
   const displayCoordinates = focusLocation || coordinates || DEFAULT_LOCATION;
 
   useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+    setSelectedCategory(searchParams.get("category"));
+  }, [searchParams]);
+
+  const loadServices = useCallback(() => {
+    setIsLoadingServices(true);
+    setError(null);
     apiRequest<{ services: Service[] }>("/services")
       .then((res) => setServices(res.services))
-      .catch(() => setServices([]));
+      .catch(() => {
+        setServices([]);
+        setError("Unable to load services. Please try again.");
+      })
+      .finally(() => setIsLoadingServices(false));
   }, []);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
 
   // Filter services client-side based on category, distance, and search
   const filteredServices = useMemo(() => {
@@ -45,6 +66,8 @@ const ServiceListingPage = () => {
 
     return services.filter((service) => {
       if (selectedCategory && service.category !== selectedCategory) return false;
+      if (selectedRating && service.rating < selectedRating) return false;
+      if (selectedPrice && service.price > selectedPrice) return false;
 
       // Apply distance filter based on reference location (focus or user coords)
       if (selectedDistance && referenceCoords) {
@@ -64,10 +87,9 @@ const ServiceListingPage = () => {
 
       return true;
     });
-  }, [services, selectedCategory, selectedDistance, searchQuery, coordinates, focusLocation]);
+  }, [services, selectedCategory, selectedDistance, selectedRating, selectedPrice, searchQuery, coordinates, focusLocation]);
 
   const handleServiceSelect = useCallback((serviceId: string) => {
-    console.log('[v0] handleServiceSelect called with:', serviceId, 'displayCoordinates:', displayCoordinates);
     setSelectedService(serviceId);
   }, [displayCoordinates]);
 
@@ -86,8 +108,7 @@ const ServiceListingPage = () => {
         
         // If showNearbyServices flag is set, also set distance filter to show nearby services
         if (showNearbyServices && searchRadius) {
-          console.log('[v0] Setting distance filter to:', searchRadius);
-          setSelectedDistance(searchRadius); // searchRadius should be a number, not string
+          setSelectedDistance(searchRadius);
         }
         
         sessionStorage.removeItem("focusLocation");
@@ -103,9 +124,21 @@ const ServiceListingPage = () => {
 
       {/* Location detection strip — only shown while GPS is loading */}
       {loading && (
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-1.5 flex items-center gap-2 text-xs text-blue-600 shrink-0">
+        <div className="bg-blue-50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-800 px-4 py-1.5 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 shrink-0">
           <div className="w-2.5 h-2.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           Detecting your GPS location&hellip;
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-100 dark:border-red-800 px-4 py-2 flex items-center justify-between gap-3 text-sm text-red-700 dark:text-red-400 shrink-0">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </span>
+          <Button size="sm" variant="outline" className="bg-card" onClick={loadServices}>
+            Try again
+          </Button>
         </div>
       )}
 
@@ -113,16 +146,22 @@ const ServiceListingPage = () => {
       <div className="flex-1 flex overflow-hidden relative h-full">
 
         {/* DESKTOP SIDEBAR (LEFT) — Scrollable only */}
-        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-white overflow-y-auto shadow-lg h-full">
+        <aside className="hidden md:flex flex-col w-[360px] lg:w-[400px] border-r border-border bg-card overflow-y-auto shadow-lg h-full">
           <MapFilters
             services={filteredServices}
             allServices={services}
             selectedCategory={selectedCategory}
             selectedDistance={selectedDistance}
+            selectedRating={selectedRating}
+            selectedPrice={selectedPrice}
+            sortBy={sortBy}
             searchQuery={searchQuery}
             userCoordinates={displayCoordinates}
             onCategoryChange={setSelectedCategory}
             onDistanceChange={setSelectedDistance}
+            onRatingChange={setSelectedRating}
+            onPriceChange={setSelectedPrice}
+            onSortChange={setSortBy}
             onSearchChange={setSearchQuery}
             onServiceSelect={handleServiceSelect}
             selectedService={selectedService || undefined}
@@ -161,10 +200,16 @@ const ServiceListingPage = () => {
                 allServices={services}
                 selectedCategory={selectedCategory}
                 selectedDistance={selectedDistance}
+                selectedRating={selectedRating}
+                selectedPrice={selectedPrice}
+                sortBy={sortBy}
                 searchQuery={searchQuery}
                 userCoordinates={displayCoordinates}
                 onCategoryChange={setSelectedCategory}
                 onDistanceChange={setSelectedDistance}
+                onRatingChange={setSelectedRating}
+                onPriceChange={setSelectedPrice}
+                onSortChange={setSortBy}
                 onSearchChange={setSearchQuery}
                 onServiceSelect={handleServiceSelect}
                 selectedService={selectedService || undefined}
@@ -189,6 +234,12 @@ const ServiceListingPage = () => {
           <MapIcon className="w-6 h-6" />
         </Button>
       </div>
+
+      {isLoadingServices && (
+        <div className="pointer-events-none fixed inset-x-0 top-20 z-[420] mx-auto w-fit rounded-full border bg-card px-4 py-2 text-sm text-muted-foreground shadow">
+          Loading nearby services...
+        </div>
+      )}
     </div>
   );
 };

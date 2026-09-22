@@ -12,10 +12,10 @@ export const NotificationBell = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-muted transition-colors"
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5 text-gray-600" />
+        <Bell className="w-5 h-5 text-muted-foreground" />
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -25,12 +25,12 @@ export const NotificationBell = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-slide-in">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-card rounded-lg shadow-xl border border-border z-50 animate-slide-in">
           <div className="p-4 border-b flex items-center justify-between">
             <h3 className="font-semibold">Notifications</h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-muted-foreground hover:text-foreground"
             >
               <X className="w-4 h-4" />
             </button>
@@ -46,7 +46,7 @@ export const NotificationBell = () => {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-4 border-b hover:bg-gray-50 transition-colors flex items-start gap-3"
+                  className="p-4 border-b hover:bg-muted transition-colors flex items-start gap-3"
                 >
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm text-foreground">

@@ -11,7 +11,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-800 px-4">
       <div className="text-center max-w-md">
         <div className="mb-8">
           <div className="inline-block">
@@ -33,14 +33,14 @@ const NotFound = () => {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted/50 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </button>
         </div>
         
-        <div className="mt-12 p-6 bg-white rounded-lg border border-gray-200">
+        <div className="mt-12 p-6 bg-card rounded-lg border border-border">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Still need help?</span><br />
             Try browsing our <Link to="/services" className="text-primary hover:underline">services</Link> or contact support

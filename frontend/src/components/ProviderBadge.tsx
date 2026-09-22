@@ -43,7 +43,7 @@ const ProviderBadgeComponent = ({ rating, reviewCount }: ProviderBadgeProps) => 
       badgeList.push(
         <div
           key="trending"
-          className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold"
+          className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-full text-xs font-semibold"
           title="Popular choice among customers"
         >
           <TrendingUp className="h-3.5 w-3.5" />

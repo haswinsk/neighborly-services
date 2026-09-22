@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Download, Calendar, TrendingUp, Users, Wallet, BookOpen } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const AdminReportsPage = () => {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [reportData, setReportData] = useState<{
     totalUsers: number;
     activeProviders: number;
@@ -161,13 +164,14 @@ const AdminReportsPage = () => {
             <h2 className="text-lg font-semibold text-foreground mb-4">Monthly Trends</h2>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" yAxisId="left" />
-                <YAxis stroke="#6b7280" yAxisId="right" orientation="right" />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+                <XAxis dataKey="month" stroke={isDark ? "#9ca3af" : "#6b7280"} />
+                <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} yAxisId="left" />
+                <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} yAxisId="right" orientation="right" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }}
-                  labelStyle={{ color: "#f3f4f6" }}
+                  contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: isDark ? "1px solid #374151" : "1px solid #e5e7eb" }}
+                  labelStyle={{ color: isDark ? "#f3f4f6" : "#1f2937" }}
+                  itemStyle={{ color: isDark ? "#e5e7eb" : "#374151" }}
                 />
                 <Legend />
                 <Line
@@ -195,12 +199,13 @@ const AdminReportsPage = () => {
             <h2 className="text-lg font-semibold text-foreground mb-4">Bookings by Category</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={categoryData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="category" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+                <XAxis dataKey="category" stroke={isDark ? "#9ca3af" : "#6b7280"} />
+                <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }}
-                  labelStyle={{ color: "#f3f4f6" }}
+                  contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: isDark ? "1px solid #374151" : "1px solid #e5e7eb" }}
+                  labelStyle={{ color: isDark ? "#f3f4f6" : "#1f2937" }}
+                  itemStyle={{ color: isDark ? "#e5e7eb" : "#374151" }}
                 />
                 <Bar dataKey="count" fill="#3b82f6" name="Bookings" />
               </BarChart>
@@ -229,7 +234,11 @@ const AdminReportsPage = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: isDark ? "1px solid #374151" : "1px solid #e5e7eb" }}
+                labelStyle={{ color: isDark ? "#f3f4f6" : "#1f2937" }}
+                itemStyle={{ color: isDark ? "#e5e7eb" : "#374151" }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -253,7 +262,7 @@ const AdminReportsPage = () => {
                   <tr key={row.category} className="border-b hover:bg-accent/50 transition-colors">
                     <td className="px-4 py-3 font-medium">{row.category}</td>
                     <td className="px-4 py-3 text-right">{row.count}</td>
-                    <td className="px-4 py-3 text-right text-green-600 font-semibold">
+                    <td className="px-4 py-3 text-right text-green-600 dark:text-green-400 font-semibold">
                       ₹{(row.count * 375).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">₹375</td>

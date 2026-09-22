@@ -76,9 +76,8 @@ router.post(
       throw new ApiError(401, "Invalid credentials");
     }
 
-    if (user.role === "provider" && !user.approved) {
-      throw new ApiError(403, "Provider account pending admin approval");
-    }
+    // Allow pending providers to login for onboarding/verification
+    // Marketplace restrictions are enforced by requireApprovedProvider middleware
 
     const token = signToken(user);
     return res.json({ token, user: sanitizeUser(user) });
